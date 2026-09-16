@@ -1,0 +1,2 @@
+# Browser regression tests only. Not required by the website.
+playwright==1.57.0

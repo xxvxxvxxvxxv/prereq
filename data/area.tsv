@@ -1,0 +1,140 @@
+BIO301|Molecular Biology|7|4
+BIO303|Genetics|7|4
+BIO304|Biological Function and Structure
+BIO306|Microbiology|7|4
+BIO308|Plant Physiology|7|3
+BIO310|Introduction to Bioinformatics
+BIO321|Biochemistry I|7|4
+BIO322|Biochemistry II|5|3
+BIO330|Environmental Plant Biology|5|3
+BIO332|Cell Biology|7|4
+BIO335|Experimental Techniques in Biology
+BIO363|Ecology
+BIO407|Multicellular Organization|5|3
+BIO415|Plant Nutrition|5|3
+BIO423|Neurobiology
+BIO444|Bioengineering
+BIO446|Biology of Aging
+BIO452|Immunology
+BIO467|Signal Transduction
+CHEM202|Chemical Kinetics|7|4
+CHEM301|Inorganic Chemistry
+CHEM302|Analytical Chemistry|7|4
+CHEM405|Electrochemistry
+CS300|Data Structures
+CS301|Algorithms
+CS302|Formal Languages and Automata Theory
+CS305|Programming Languages
+CS306|Database Systems
+CS307|Operating Systems
+CS308|Software Engineering|7|4
+CS310|Mobile Application Development
+CS400|Logic in Computer Science
+CS401|Computer Architectures|6|4
+CS403|Distributed Systems
+CS404|Artificial Intelligence
+CS405|Computer Graphics
+CS406|Parallel Computing
+CS407|Theory of Computation
+CS408|Computer Networks
+CS411|Cryptography
+CS412|Machine Learning
+CS414|Network Science
+CS415|Introduction to deep learning
+CS419|Digital Image and Video Analysis
+CS432|Computer and Network Security
+CS435|Quantum Programming I
+CS436|Cloud Computing
+CS437|Cybersecurity Practices and Applications
+CS438|Blockchain: Security and Applications
+CS440|Quantum Programming II
+CS442|Software Design Patterns
+CS445|Natural Language Processing
+CS447|Immersive Systems Development
+CS449|Human Computer Interaction
+CS455|Large Language Models: Theoretical Foundations and Practical Applications
+CS460|Automated Debugging
+CS48004|Special Topics in CS: Agile Software Development
+CS48006|Special Topics in CS: Decentralized Finance
+CS48007|Special Topics in CS: Internet of Things Sensing System
+CS48008|Special Topics in CS: Malware Analysis and Detection
+CS48010|Special Topics in CS: Performance Analysis and Engineering
+CS48011|Special Topics in CS: Evolution and Biology for Artificial Intelligence
+CS48012|Special Topics in CS: Agentic AI Systems: Architecture and Deployment
+DSA201|Advanced Programming for Data Science
+DSA210|Introduction to Data Science
+DSA301|Data Visualization
+DSA428|Big Data Processing
+DSA440|Data and Artificial Intelligence (AI) Ethics
+DSA473|Time Series and Forecasting Models
+EE48008|Special Topics in EE: Heterogeneous Computing and System-on-Chip Design
+EE48009|Special Topics in EE: Machine Learning for Communication Systems
+EE48010|Special Topics in EE: Brain-Computer Interfaces
+EE48011|Secure and Energy-Constrained Integrated Bioelectronic Systems
+EE48012|Special Topics in EE: Security, Privacy and Robustness in Machine Learning
+ENRG220|World Energy Outlook: The Coming Year
+ENRG301|Energy Systems and Environment
+ENRG315|Energy|5|3
+ENRG322|Battery Science and Engineering
+ENRG401|Energy: Supply Chain, Economics and Geopolitics
+ENRG420|Energy Systems Optimization
+ENRG423|Electric Power Systems: Operation, Technology and Economics
+ENRG424|Cell Design, Modelling and Battery Pack Development
+ENRG426|Battery Management Systems
+ENS202|Thermodynamics
+ENS204|Mechanics
+ENS205|Introduction to Materials Science
+ENS207|Introduction to Energy Systems
+ENS208|Introduction to Industrial Engineering
+ENS209|Introduction to Computer Aided Drafting and Solid Modeling
+ENS210|Computational Biology
+ENS216|Information Systems: A Historical Perspective
+ENS303|Introduction to Space Technology
+ENS410|Advanced Solid Modeling Techniques
+ENS413|Experimental Methods in Nanoscience I
+ENS414|Experimental Methods in Nanoscience II
+IE404|Digital Transformation
+IE435|Production Dynamics and Control
+IE436|Monte Carlo Methods in Finance
+IE48002|Special Topics in IE:Advanced statistics with R
+IE48005|Special Topics in IE: Digital Manufacturing
+MATH206|Vector Calculus
+MATH301|Introduction to Mathematical Analysis
+MATH305|Complex Calculus
+MATH306|Statistical Modelling
+MATH307|Dynamical Systems
+MATH311|Introduction to Algebra
+MATH317|Elementary Number Theory
+MATH318|Introduction to Combinatorics
+MATH322|Partial Differential Equations
+MATH409|Proofs from the Notebook
+MATH410|Introduction to Stochastic Calculus
+MATH414|Finite Fields and Applications
+MATH484|Mathematical Introduction to Quantum Algorithms and Post-Quantum Cryptography
+MAT204|Electrical, Optical and Magnetic Properties of Materials
+MAT302|Polymer Chemistry|7|4
+MAT305|Polymer Engineering: Fundamentals|5|3
+MAT306|Computational Techniques for Materials at the Nano-scale
+MAT307|Composite Materials|7|3
+MAT308|Phase Equilibria|5|3
+MAT309|Transport Phenomena in Materials Processing
+MAT312|Materials Characterization|7|4
+MAT314|Mechanical Properties of Materials|5|3
+MAT424|Materials Selection in Product Design
+MAT48000|Special Topics in Materials Science and Nanoengineering: Adhesion Science and Engineering
+ME303|Control System Design
+ME412|Introduction to the Finite Element Method
+ME435|Scaling in Engineering Systems
+ME437|Biomechatronics
+ME441|Advanced Vehicle Systems
+NS213|Basic Concepts of Physics for Scientists and Engineers
+NS214|Oscillations, Waves and Optics
+NS218|Fundamentals of Nanoscience
+PHYS113|Basic Concepts of Physics for Scientists and Engineers|7|3
+PHYS302|Solid State Physics
+PHYS303|Quantum Mechanics I
+PHYS304|Quantum Mechanics II
+PHYS401|Classical Mechanics
+PHYS411|Electromagnetic Theory I
+PHYS412|Statistical Mechanics
+VA455|Physical Computing|6|3|FASS

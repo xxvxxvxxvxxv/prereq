@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Sabancı course prerequisites, connected from university courses to the classes they open.">
+<meta name="color-scheme" content="dark"><title>PREREQ · Sabancı prerequisites</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css">
+<script src="model.js" defer></script><script src="app.js" defer></script>
+</head>
+<body>
+<header class="app-header">
+<a class="brand" href="./" aria-label="Choose major"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4 14h6c6 0 6-9 13-9M4 14h19M4 14h6c6 0 6 9 13 9"/><circle cx="4" cy="14" r="2"/><circle cx="23" cy="5" r="2"/><circle cx="23" cy="14" r="2"/><circle cx="23" cy="23" r="2"/></svg><span>PREREQ</span><span class="brand-sub">SABANCI</span></a>
+<button class="selection-button" id="change-major"><span id="selected-major">Choose your major</span><span class="term-tag" id="selected-term">Admission term</span><span aria-hidden="true">⌄</span></button>
+<nav class="header-actions" aria-label="Application actions"><button id="rules-button" class="quiet">Rules</button><button id="plan-button" class="quiet">My plan <span id="plan-count" class="tiny-count">0</span></button><button id="source-button" class="source-pill"><i id="source-dot"></i><span id="source-label">Snapshot</span></button><button id="refresh-button" class="icon-button" title="Refresh official catalog" aria-label="Refresh official catalog">↻</button></nav>
+</header>
+<main id="workspace">
+<div class="toolbar">
+<div class="search-block"><label class="search-box"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="m12 12 5 5"/></svg><input id="search" type="search" autocomplete="off" placeholder="Find a course…" aria-label="Find a course by code or name"><kbd>/</kbd></label><div id="search-results" class="search-results" hidden></div></div>
+<div class="view-tabs" role="group" aria-label="Map view"><button id="graph-tab" class="active" aria-pressed="true">Map</button><button id="list-tab" aria-pressed="false">List</button></div>
+<select id="status-filter" aria-label="Filter by course status"><option value="all">All courses</option><option value="unmarked">Unmarked</option><option value="planned">Planned</option><option value="completed">Completed</option></select>
+<button class="toolbar-note" id="match-count" title="Prerequisite data coverage"></button>
+</div>
+<div class="map-nav" id="map-nav"><button id="jump-university">University</button><button id="jump-required">Major required</button><button id="jump-electives">Electives</button><span class="nav-divider"></span><span id="direction-label">Prerequisite <span aria-hidden="true">→</span> course</span><button class="back-button" id="back-to-degree" hidden>← All courses</button></div>
+<section id="graph-region" aria-label="Interactive prerequisite map"><svg id="graph" role="group" aria-label="Course prerequisites. Click the plus to expand what a course opens. Drag to pan. Zoom with the controls." tabindex="0"><defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7"/></marker></defs><g id="viewport"></g></svg></section>
+<section id="list-region" class="list-region" aria-label="Course list" hidden><div class="list-heading"><span>COURSE / TITLE</span><span>CATEGORY</span><span>SU / ECTS</span><span>STATUS</span></div><div id="course-list"></div><p id="list-empty" hidden>No courses match this filter.</p><button class="quiet" id="list-more" hidden>Show more courses</button></section>
+<div class="empty-state" id="empty-state" hidden><h2 id="empty-title">Checking the catalog</h2><p id="empty-message">Fetching your admission-term requirements.</p><button id="empty-change" class="primary">Choose another major or term</button></div>
+<div class="graph-controls" id="graph-controls"><button id="zoom-out" aria-label="Zoom out" title="Zoom out">−</button><span id="zoom-level">100%</span><button id="zoom-in" aria-label="Zoom in" title="Zoom in">+</button><span class="control-divider"></span><button id="fit-button" aria-label="Fit map" title="Fit the entire map">⛶</button><button id="reset-button" aria-label="Reset branches and view" title="Reset to university courses">↺</button></div>
+<div class="map-legend"><span><i class="subject-dot subject-ee"></i>EE</span><span><i class="subject-dot subject-bio"></i>BIO</span><span><i class="subject-dot subject-cs"></i>CS</span><span><i class="subject-dot subject-me"></i>ME</span><span class="legend-separator"></span><span class="legend-help">+ reveal branches · drag to move</span></div>
+<aside id="course-panel" class="course-panel" aria-label="Course details" hidden><div class="panel-top"><span class="eyebrow">COURSE DETAILS</span><button id="close-course" class="icon-button" aria-label="Close course details">×</button></div><div id="course-content"></div></aside>
+</main>
+<footer class="app-footer"><span id="footer-status">Public catalog · no university login</span><span class="footer-right">Independent tool <span>·</span> made by xxv <button id="help-button" aria-label="Help and keyboard shortcuts">?</button></span></footer>
+<div id="toast" role="status" class="toast" hidden></div>
+<dialog id="chooser" class="chooser-dialog"><form id="choose-form"><div class="dialog-top"><span class="eyebrow">SABANCI · UNOFFICIAL</span><button type="button" class="icon-button" id="close-chooser" aria-label="Close major selector">×</button></div><h2>Choose your major.</h2><p class="intro">Start with university courses. Follow what they open.</p><label class="field-label" for="major-select">MAJOR</label><select id="major-select" required></select><label class="field-label" for="year-select">FIRST ADMISSION TERM <span>Not the current semester</span></label><div class="admit-fields"><select id="year-select" aria-label="First admission academic year"></select><select id="season-select" aria-label="First admission season"><option value="01">Fall</option><option value="02">Spring</option><option value="03">Summer</option></select></div><button type="submit" class="primary wide" id="open-map">Open map <span>→</span></button><p class="chooser-note" id="chooser-note">EE / Fall 2024 is included offline. Other selections need the local server and catalog access.</p></form></dialog>
+<dialog id="info-dialog" class="info-dialog"><div class="dialog-top"><span class="eyebrow" id="info-eyebrow">INFORMATION</span><button class="icon-button" id="close-info" aria-label="Close dialog">×</button></div><div id="info-content"></div></dialog>
+<input id="import-file" type="file" accept="application/json,.json" hidden>
+</body></html>

@@ -1,0 +1,13 @@
+PREREQ is an independent, unofficial visualization tool.
+
+Course codes, titles, credit values and requirement facts are attributed to
+Sabanci University's official public SUIS catalog. Snapshot observations and
+links are documented in docs/SOURCES.md and in the data records themselves.
+The MIT software license does not claim ownership of the university's name,
+trademarks, course descriptions or source documents. No university logos,
+photographs, faculty contact lists, full course descriptions, credentials,
+private user screenshots or third-party font files are included.
+
+The visual structure was inspired by a user-supplied screenshot of an
+expandable OSINT catalog. No source code, branding or graphic assets were
+copied from that tool.

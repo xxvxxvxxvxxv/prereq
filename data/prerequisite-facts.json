@@ -1,0 +1,248 @@
+{
+  "observedAt": "2026-09-17",
+  "note": "Manually checked official course-page fields, not an end-to-end scraper run. Compact expressions are normalized factual transcriptions; source URLs are generated from the exact codes.",
+  "records": [
+    {
+      "code": "IF 100",
+      "prerequisite": "__",
+      "corequisite": "IF 100R"
+    },
+    {
+      "code": "NS 101",
+      "prerequisite": "__",
+      "corequisite": "NS 101R"
+    },
+    {
+      "code": "NS 102",
+      "prerequisite": "NS 101 - Undergraduate - Min Grade D",
+      "corequisite": "NS 102R"
+    },
+    {
+      "code": "MATH 201",
+      "prerequisite": "__",
+      "corequisite": "MATH 201R"
+    },
+    {
+      "code": "MATH 202",
+      "prerequisite": "MATH 102 - Undergraduate - Min Grade D",
+      "corequisite": "MATH 202R"
+    },
+    {
+      "code": "MATH 203",
+      "prerequisite": "MATH 102 - Undergraduate - Min Grade D",
+      "corequisite": "MATH 203R"
+    },
+    {
+      "code": "MATH 204",
+      "prerequisite": "__",
+      "corequisite": "MATH 204R"
+    },
+    {
+      "code": "MATH 212",
+      "prerequisite": "MATH 102 - Undergraduate - Min Grade D",
+      "corequisite": "MATH 212R"
+    },
+    {
+      "code": "CS 303",
+      "prerequisite": "__",
+      "corequisite": "CS 303L and CS 303R"
+    },
+    {
+      "code": "EE 200",
+      "prerequisite": "ENS 203 - Undergraduate - Min Grade D",
+      "corequisite": "EE 202"
+    },
+    {
+      "code": "EE 308",
+      "prerequisite": "CS 303 - Undergraduate - Min Grade D",
+      "corequisite": "EE 308L and EE 308R"
+    },
+    {
+      "code": "EE 321",
+      "prerequisite": "__",
+      "corequisite": "EE 321L"
+    },
+    {
+      "code": "ENS 491",
+      "prerequisite": "__",
+      "corequisite": "ENS 491R",
+      "unknownReason": "Program- and admission-year-specific prerequisites are in the course description; check the source.",
+      "generalRequirements": "The description requires at least 80 completed SU credits and program-specific prerequisites. EE: students admitted in 2025 or earlier need EE 202 OR ENS 211; 2026 and later need both. Other programs have different prerequisites. No universal edge is inferred from this contextual rule."
+    },
+    {
+      "code": "ENS 492",
+      "prerequisite": "ENS 491 - Undergraduate - Min Grade S or ENS 491 - Undergraduate - Min Grade D",
+      "corequisite": "__"
+    },
+    {
+      "code": "EE 302",
+      "prerequisite": "EL 202 - Undergraduate - Min Grade D or EE 202 - Undergraduate - Min Grade D",
+      "corequisite": "EE 302L and EE 302R"
+    },
+    {
+      "code": "EE 306",
+      "prerequisite": "ENS 201 - Undergraduate - Min Grade D and EE 200 - Undergraduate - Min Grade D and EE 202 - Undergraduate - Min Grade D",
+      "corequisite": "EE 306R"
+    },
+    {
+      "code": "EE 307",
+      "prerequisite": "ENS 203 - Undergraduate - Min Grade D",
+      "corequisite": "EE 307R"
+    },
+    {
+      "code": "EE 310",
+      "prerequisite": "CS 303 - Undergraduate - Min Grade D",
+      "corequisite": "EE 310L"
+    },
+    {
+      "code": "EE 311",
+      "prerequisite": "ENS 211 - Undergraduate - Min Grade D",
+      "corequisite": "EE 311R"
+    },
+    {
+      "code": "EE 312",
+      "prerequisite": "ENS 211 - Undergraduate - Min Grade D",
+      "corequisite": "EE 312R"
+    },
+    {
+      "code": "EE 314",
+      "prerequisite": "ENS 211 - Undergraduate - Min Grade D",
+      "corequisite": "EE 314R"
+    },
+    {
+      "code": "EE 401",
+      "prerequisite": "CS 303 - Undergraduate - Min Grade D and (EL 302 - Undergraduate - Min Grade D or EE 302 - Undergraduate - Min Grade D)",
+      "corequisite": "EE 401L"
+    },
+    {
+      "code": "EE 402",
+      "prerequisite": "EE 401 - Undergraduate - Min Grade D or EL 401 - Undergraduate - Min Grade D",
+      "corequisite": "EE 402R"
+    },
+    {
+      "code": "EE 403",
+      "prerequisite": "EE 307 - Undergraduate - Min Grade D",
+      "corequisite": "EE 403R"
+    },
+    {
+      "code": "EE 409",
+      "prerequisite": "ENS 201 - Undergraduate - Min Grade D",
+      "corequisite": null
+    },
+    {
+      "code": "EE 423",
+      "prerequisite": "EE 308 - Undergraduate - Min Grade D",
+      "corequisite": "EE 423L"
+    },
+    {
+      "code": "ENS 201",
+      "prerequisite": "NS 101 - Undergraduate - Min Grade D and MATH 102 - Undergraduate - Min Grade D",
+      "corequisite": "ENS 201R"
+    },
+    {
+      "code": "EE 404",
+      "prerequisite": "ENS 203 - Undergraduate - Min Grade D",
+      "corequisite": "EE 404L"
+    },
+    {
+      "code": "EE 405",
+      "prerequisite": "EL 303 - Undergraduate - Min Grade D or EE 303 - Undergraduate - Min Grade D",
+      "corequisite": "EE 405L and EE 405R"
+    },
+    {
+      "code": "EE 406",
+      "prerequisite": "TE 305 - Undergraduate - Min Grade D or EE 301 - Undergraduate - Min Grade D",
+      "corequisite": "__"
+    },
+    {
+      "code": "EE 407",
+      "prerequisite": "EL 204 - Undergraduate - Min Grade D or EE 307 - Undergraduate - Min Grade D",
+      "corequisite": "EE 407L"
+    },
+    {
+      "code": "EE 408",
+      "prerequisite": "(EL 202 - Undergraduate - Min Grade D or EE 202 - Undergraduate - Min Grade D) and (EL 204 - Undergraduate - Min Grade D or EE 307 - Undergraduate - Min Grade D)",
+      "corequisite": "EE 408R"
+    },
+    {
+      "code": "EE 410",
+      "prerequisite": "(MATH 201 - Undergraduate - Min Grade D or MATH 212 - Undergraduate - Min Grade D) and MATH 203 - Undergraduate - Min Grade D",
+      "corequisite": "EE 410R"
+    },
+    {
+      "code": "EE 411",
+      "prerequisite": "EE 306 - Undergraduate - Min Grade D",
+      "corequisite": "EE 411L"
+    },
+    {
+      "code": "EE 412",
+      "prerequisite": "EE 411 - Undergraduate - Min Grade D",
+      "corequisite": "EE 412L"
+    },
+    {
+      "code": "EE 413",
+      "prerequisite": "TE 304 - Undergraduate - Min Grade D or EE 314 - Undergraduate - Min Grade D",
+      "corequisite": "EE 413R"
+    },
+    {
+      "code": "EE 414",
+      "prerequisite": "CS 201 - Undergraduate - Min Grade D",
+      "corequisite": "EE 414R"
+    },
+    {
+      "code": "EE 415",
+      "prerequisite": "TE 302 - Undergraduate - Min Grade D or EE 312 - Undergraduate - Min Grade D",
+      "corequisite": "EE 415R"
+    },
+    {
+      "code": "EE 417",
+      "prerequisite": "CS 201 - Undergraduate - Min Grade D or DSA 201 - Undergraduate - Min Grade D",
+      "corequisite": "EE 417L"
+    },
+    {
+      "code": "EE 419",
+      "prerequisite": "TE 302 - Undergraduate - Min Grade D or EE 312 - Undergraduate - Min Grade D",
+      "corequisite": "EE 419L"
+    },
+    {
+      "code": "EE 420",
+      "prerequisite": "EE 306 - Undergraduate - Min Grade D",
+      "corequisite": "EE 420L"
+    },
+    {
+      "code": "EE 426",
+      "prerequisite": "EE 310 - Undergraduate - Min Grade D or CS 303 - Undergraduate - Min Grade D",
+      "corequisite": "__"
+    },
+    {
+      "code": "EE 440",
+      "prerequisite": "EE 302 - Undergraduate - Min Grade D and EE 303 - Undergraduate - Min Grade D",
+      "corequisite": "EE 440L"
+    },
+    {
+      "code": "EE 444",
+      "prerequisite": "ENS 201 - Undergraduate - Min Grade D and ENS 203 - Undergraduate - Min Grade D and ENS 211 - Undergraduate - Min Grade D",
+      "corequisite": "__"
+    },
+    {
+      "code": "EE 473",
+      "prerequisite": "ENS 203 - Undergraduate - Min Grade D",
+      "corequisite": "EE 473L"
+    },
+    {
+      "code": "EE 234",
+      "prerequisite": "__",
+      "corequisite": "__"
+    },
+    {
+      "code": "ENS 311",
+      "prerequisite": "CS 201 - Undergraduate - Min Grade D or DSA 201 - Undergraduate - Min Grade D",
+      "corequisite": "ENS 311R"
+    },
+    {
+      "code": "ENS 206",
+      "prerequisite": "MATH 201 - Undergraduate - Min Grade D or MATH 212 - Undergraduate - Min Grade D",
+      "corequisite": "ENS 206R"
+    }
+  ]
+}
