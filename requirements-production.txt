@@ -1,2 +1,1 @@
-# Production WSGI server only. Local start.py uses no third-party packages.
-gunicorn==26.2.2
+gunicorn==26.2.0
