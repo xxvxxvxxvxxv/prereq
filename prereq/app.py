@@ -119,7 +119,8 @@ class App:
                         if refresh and q.get('catalogTerm'):
                             ct=q['catalogTerm'][0]
                             if not TERM_RE.fullmatch(ct): raise CatalogError('Invalid catalog term.')
-                            self.service.schedule('catalog:'+ct,True)
+                            # The displayed major's term-scoped index does the refresh.
+                            # Do not launch an all-subject job ahead of visible courses.
                 elif path=='/api/course':
                     if not {'code'} <= set(q) or set(q)-{'code','catalogTerm'}:
                         raise CatalogError('A course code is required.')

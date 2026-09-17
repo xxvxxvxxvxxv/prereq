@@ -35,7 +35,14 @@ class FixtureClient:
         if url==CATALOG_START:return f.selector(),url
         if url==SCHEDULE_START:return f.selector(True),url
         if url.endswith('p_disp_cat_term_date'):return f.search(),url
-        if url==CATALOG_SEARCH:return f.listing(['CS 201','CS 204','CS 300','CS 303','ECON 201','MATH 101']),url
+        if url==CATALOG_SEARCH:
+            # The fixture supports both broad and exact queries. The live app
+            # must use exact queries for its first prerequisite records.
+            q=parse_qs(__import__('urllib.parse',fromlist=['urlencode']).urlencode(fields or []),keep_blank_values=True)
+            selected=[x for x in q.get('sel_subj',[]) if x!='dummy']
+            if len(selected)==1 and q.get('sel_crse_strt',[''])[0]:
+                return f.listing([code(selected[0]+q['sel_crse_strt'][0])],q['term_in'][0]),url
+            return f.listing(['CS 201','CS 204','CS 300','CS 303','ECON 201','MATH 101']),url
         if url.endswith('bwckgens.p_proc_term_date'):return f.search(True),url
         if url.endswith('bwckschd.p_get_crse_unsec'):return f.schedule(),url
         if 'bwckctlg.p_disp_course_detail' in url:

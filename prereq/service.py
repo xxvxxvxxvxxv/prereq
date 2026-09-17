@@ -141,7 +141,18 @@ class CatalogService:
         # Fixed-size lock striping bounds memory even for arbitrary valid codes.
         guard = self._load_locks[int(hashlib.sha256(key.encode()).hexdigest()[:8], 16) % 64]
         with guard:
-            return self._load(key)
+            if key.startswith('course:') and key.count(':') == 2:
+                cached, stamp = self.store.get(key)
+                _, term, cid = key.split(':', 2)
+                if (cached and cached.get('catalogTerm') == term and cached.get('code') == cid
+                        and time.time()-stamp < TTL):
+                    return cached
+            value = self._load(key)
+            if key.startswith('course:') and key.count(':') == 2:
+                # Store under the single-course lock so a concurrent index and
+                # clicked course share one successful source response.
+                self.store.put(key, value)
+            return value
 
     def _load(self, key):
         kind, rest = key.split(':', 1)
@@ -225,18 +236,20 @@ class CatalogService:
                 raise CatalogError('Choose a catalog term. Unversioned detail is available only as a labeled saved example.')
             term, cid = rest.split(':', 1)
             cid = code(cid)
+            # The full catalog is an optional accelerator, never a gate.
+            # A failed all-subject search used to prevent EVERY individual
+            # prerequisite read, including a course whose page was readable.
             catalog, stamp = self.store.get('catalog:'+term)
-            if not catalog or time.time()-stamp > TTL:
-                catalog = self.load('catalog:'+term)
-                self.store.put('catalog:'+term, catalog)
-            item = catalog['courses'].get(cid)
-            if not item:
-                raise CatalogError(f'{cid} is not in the retrieved {term} catalog. Its prerequisites remain unknown for that term.')
-            if cid in catalog.get('details', {}):
-                result = catalog['details'][cid]
-            else:
-                html, source = read(item['source'])
-                result = parse_detail(html, cid, term, source)
+            current = bool(catalog and catalog.get('catalogTerm') == term and time.time()-stamp <= TTL)
+            if current and cid in catalog.get('details', {}):
+                result = dict(catalog['details'][cid])
+                if result.get('code') != cid or result.get('catalogTerm') != term:
+                    raise CatalogError('Cached catalog detail has a different course or term.')
+                result.update(observedAt=catalog.get('observedAt'), origin=catalog.get('origin', 'live'),
+                              provenance=copy.deepcopy(catalog.get('provenance', [])))
+                return result
+            item = catalog.get('courses', {}).get(cid) if current else None
+            result = adapter.course(cid, term, item)
         elif kind == 'schedule':
             term, cid = rest.split(':', 1)
             catalog, _ = self.store.get('catalog:'+term)
@@ -248,7 +261,7 @@ class CatalogService:
         return result
 
     def _index_codes(self, degree):
-        priority = {'university':0, 'required':1, 'core':2, 'area':3, 'free':4}
+        priority = {'required':0, 'university':1, 'core':2, 'area':3, 'free':4}
         ordered = sorted(degree['sections'], key=lambda s:priority.get(s['id'], 1))
         return list(dict.fromkeys(c['code'] for s in ordered for c in s['courses']))[:3000]
 
@@ -264,7 +277,7 @@ class CatalogService:
                 for k, body, stamp in rows:
                     cid = k[len(prefix):]
                     item = json.loads(body)
-                    if catalog_term is None or item.get('catalogTerm') == catalog_term:
+                    if item.get('code') == cid and (catalog_term is None or item.get('catalogTerm') == catalog_term):
                         data[cid], saved[cid] = item, stamp
         seed_details = self.seed.get('catalogDetails', {}).get(catalog_term, {}) if catalog_term else self.seed.get('details', {})
         for cid in codes:
@@ -286,14 +299,11 @@ class CatalogService:
                         meta=dict(refreshing=False, offline=offline, total=len(codes), loaded=len(details),
                                   legacy=True, error=None, scope='Unversioned saved examples, not rules for a selected catalog term.'))
         catalog, catalog_saved = self.store.get('catalog:'+catalog_term)
-        if not catalog or time.time()-catalog_saved > TTL:
-            result = self.get('catalog:'+catalog_term)
-            if not catalog:
-                return dict(data=dict(program=program, term=term, catalogTerm=catalog_term, details=details),
-                    meta=dict(refreshing=result['meta']['refreshing'], stage='catalog', error=result['meta']['error'],
-                              total=len(codes), loaded=len(details), offline=offline))
-        missing_catalog = [cid for cid in codes if cid not in catalog['courses']]
-        pending = [cid for cid in codes if cid in catalog['courses'] and time.time()-saved.get(cid, 0) > TTL]
+        # Exact-course responses validate the term and identity themselves.
+        # Aggregate catalog availability does not decide whether to read them.
+        pending = [cid for cid in codes if time.time()-saved.get(cid, 0) > TTL]
+        missing_catalog = ([cid for cid in codes if cid not in catalog.get('courses', {})]
+                           if catalog and time.time()-catalog_saved < TTL else [])
         job_key = key + ':' + catalog_term
         with self.lock:
             job = self.index_jobs.get(job_key, {})
@@ -302,14 +312,17 @@ class CatalogService:
                 if not any(j.get('running') for j in self.index_jobs.values()):
                     if len(self.index_jobs) >= 128:
                         self.index_jobs = {k:v for k,v in self.index_jobs.items() if v.get('running') or time.time()-v.get('started',0)<300}
-                    job = dict(running=True, started=time.time(), at=now_iso(), error=None, attempted=0)
+                    job = dict(running=True, started=time.time(), at=now_iso(), error=None, attempted=0, currentCourse=None, stage='details')
                     self.index_jobs[job_key] = job
                     self.index_executor.submit(self._build_index, job_key, pending, catalog_term)
                 else:
                     job = dict(running=True, stage='queued', error=None)
             meta = dict(refreshing=bool(job.get('running')), error=job.get('error'), lastAttempt=job.get('at'),
                         offline=offline, attempted=job.get('attempted', 0), total=len(codes), loaded=len(details),
-                        catalogTerm=catalog_term, catalogTotal=len(catalog['courses']),
+                        catalogTerm=catalog_term, catalogTotal=len(catalog['courses']) if catalog else None,
+                        stage=job.get('stage', 'offline' if offline else 'idle'), currentCourse=job.get('currentCourse'),
+                        failed=job.get('failed', 0), lastError=job.get('lastError'),
+                        reviewRequired=sum(d.get('prerequisite', {}).get('type') == 'unknown' for d in details.values()),
                         missingFromCatalog=missing_catalog, degreeComplete=degree.get('complete', True))
         return dict(data=dict(program=program, term=term, catalogTerm=catalog_term, details=details), meta=meta)
 
@@ -322,19 +335,24 @@ class CatalogService:
             previous, saved = self.store.get(cache_key)
             if previous and time.time()-saved < TTL:
                 continue
+            with self.lock:
+                self.index_jobs[key].update(currentCourse=cid, stage='details')
             try:
                 self.store.put(cache_key, self.load(cache_key))
                 failures = 0
             except Exception as exc:
                 failures += 1
                 error = str(exc) if isinstance(exc, CatalogError) else 'Official catalog unavailable. Existing details were kept.'
+                with self.lock:
+                    j = self.index_jobs[key]
+                    j.update(failed=j.get('failed', 0)+1, lastError=error)
                 LOG.warning('Prerequisite detail check failed (%s): %s', cache_key, error)
             with self.lock:
                 self.index_jobs[key]['attempted'] += 1
             if failures >= 3:
                 break
         with self.lock:
-            self.index_jobs[key].update(running=False, error=error)
+            self.index_jobs[key].update(running=False, error=error, currentCourse=None, stage='paused' if error else 'idle')
 
     def close(self):
         with self.lock:

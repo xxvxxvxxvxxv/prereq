@@ -1,0 +1,190 @@
+TAP version 13
+# Subtest: 624 unique degree options preserve exact published section counts
+ok 1 - 624 unique degree options preserve exact published section counts
+  ---
+  duration_ms: 1.559659
+  type: 'test'
+  ...
+# Subtest: university, major required, core electives, area, free in that order
+ok 2 - university, major required, core electives, area, free in that order
+  ---
+  duration_ms: 0.221215
+  type: 'test'
+  ...
+# Subtest: opening initial sections displays actual required courses
+ok 3 - opening initial sections displays actual required courses
+  ---
+  duration_ms: 13.008944
+  type: 'test'
+  ...
+# Subtest: no subject folders or arbitrary number-range groups
+ok 4 - no subject folders or arbitrary number-range groups
+  ---
+  duration_ms: 1.88436
+  type: 'test'
+  ...
+# Subtest: only genuine HUM and MATH degree choices are grouped
+ok 5 - only genuine HUM and MATH degree choices are grouped
+  ---
+  duration_ms: 1.135808
+  type: 'test'
+  ...
+# Subtest: opening the HUM choice does not mark every option required or completed
+ok 6 - opening the HUM choice does not mark every option required or completed
+  ---
+  duration_ms: 2.623538
+  type: 'test'
+  ...
+# Subtest: forward direction IF 100 to CS 201 to CS 204
+ok 7 - forward direction IF 100 to CS 201 to CS 204
+  ---
+  duration_ms: 1.052902
+  type: 'test'
+  ...
+# Subtest: MATH 101 branches into known dependants, not every math course
+ok 8 - MATH 101 branches into known dependants, not every math course
+  ---
+  duration_ms: 0.995245
+  type: 'test'
+  ...
+# Subtest: no fabricated section-to-course prerequisite edges
+ok 9 - no fabricated section-to-course prerequisite edges
+  ---
+  duration_ms: 1.387038
+  type: 'test'
+  ...
+# Subtest: opening course keeps its own world position unchanged
+ok 10 - opening course keeps its own world position unchanged
+  ---
+  duration_ms: 2.626482
+  type: 'test'
+  ...
+# Subtest: closed paths contain no hidden descendant nodes
+ok 11 - closed paths contain no hidden descendant nodes
+  ---
+  duration_ms: 0.80668
+  type: 'test'
+  ...
+# Subtest: corequisites do not become prerequisite arrows
+ok 12 - corequisites do not become prerequisite arrows
+  ---
+  duration_ms: 0.416079
+  type: 'test'
+  ...
+# Subtest: unknown conjunctions do not create partial inferred edges
+ok 13 - unknown conjunctions do not create partial inferred edges
+  ---
+  duration_ms: 0.09878
+  type: 'test'
+  ...
+# Subtest: AND, OR and mixed conditions remain distinguishable
+ok 14 - AND, OR and mixed conditions remain distinguishable
+  ---
+  duration_ms: 0.068223
+  type: 'test'
+  ...
+# Subtest: current detail count and fail-closed context are explicit
+ok 15 - current detail count and fail-closed context are explicit
+  ---
+  duration_ms: 0.189036
+  type: 'test'
+  ...
+# Subtest: subject colors classify only by actual code prefix
+ok 16 - subject colors classify only by actual code prefix
+  ---
+  duration_ms: 0.076506
+  type: 'test'
+  ...
+# Subtest: search retains structure; matches are not represented as eligibility
+ok 17 - search retains structure; matches are not represented as eligibility
+  ---
+  duration_ms: 1.797729
+  type: 'test'
+  ...
+# Subtest: focus map opens selected course without subject categories
+ok 18 - focus map opens selected course without subject categories
+  ---
+  duration_ms: 0.730705
+  type: 'test'
+  ...
+# Subtest: same course may occur in multiple branches with unique stable IDs
+ok 19 - same course may occur in multiple branches with unique stable IDs
+  ---
+  duration_ms: 0.935354
+  type: 'test'
+  ...
+# Subtest: cycle detection bounds an inconsistent source graph
+ok 20 - cycle detection bounds an inconsistent source graph
+  ---
+  duration_ms: 0.633598
+  type: 'test'
+  ...
+# Subtest: secondary upstream view preserves full mixed AND/OR tree
+ok 21 - secondary upstream view preserves full mixed AND/OR tree
+  ---
+  duration_ms: 0.369489
+  type: 'test'
+  ...
+# Subtest: valid plans remain major- and admission-term-specific
+ok 22 - valid plans remain major- and admission-term-specific
+  ---
+  duration_ms: 0.682732
+  type: 'test'
+  ...
+# Subtest: plans reject unknown courses, arbitrary statuses and prototype keys
+ok 23 - plans reject unknown courses, arbitrary statuses and prototype keys
+  ---
+  duration_ms: 0.98482
+  type: 'test'
+  ...
+# Subtest: catalog text stays model data, never evaluated markup
+ok 24 - catalog text stays model data, never evaluated markup
+  ---
+  duration_ms: 0.084217
+  type: 'test'
+  ...
+# Subtest: empty expanded set renders only five closed sections and no course edges
+ok 25 - empty expanded set renders only five closed sections and no course edges
+  ---
+  duration_ms: 0.908224
+  type: 'test'
+  ...
+# Subtest: opening a section does not automatically expand any course or another section
+ok 26 - opening a section does not automatically expand any course or another section
+  ---
+  duration_ms: 0.725187
+  type: 'test'
+  ...
+# Subtest: unknown elective pools display question marks rather than verified zero
+ok 27 - unknown elective pools display question marks rather than verified zero
+  ---
+  duration_ms: 0.17169
+  type: 'test'
+  ...
+# Subtest: saved local markers survive an incomplete degree refresh
+ok 28 - saved local markers survive an incomplete degree refresh
+  ---
+  duration_ms: 0.147143
+  type: 'test'
+  ...
+# Subtest: keeping local markers does not accept malformed or prototype keys
+ok 29 - keeping local markers does not accept malformed or prototype keys
+  ---
+  duration_ms: 0.898048
+  type: 'test'
+  ...
+# Subtest: current catalog metadata takes precedence over degree pool display title
+ok 30 - current catalog metadata takes precedence over degree pool display title
+  ---
+  duration_ms: 0.555319
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 111.394351

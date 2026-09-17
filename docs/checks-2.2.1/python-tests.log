@@ -1,0 +1,9 @@
+.........................................................................................................................................Prerequisite detail check failed (course:202601:EE 202): Test unavailable
+Prerequisite detail check failed (course:202601:EE 200): Test unavailable
+Prerequisite detail check failed (course:202601:CS 303): Test unavailable
+........Source check failed for degree:BSCS:202401: An elective pool could not be checked. The previous complete degree snapshot was kept.
+.......................................
+----------------------------------------------------------------------
+Ran 184 tests in 0.841s
+
+OK

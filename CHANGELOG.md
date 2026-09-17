@@ -1,3 +1,16 @@
+# 2.2.1
+
+- Remove the full-semester-catalog dependency from single-course reads and index startup.
+- Use subject/course-specific Banner POST queries and returned detail links.
+- Prioritize major-required records; reuse validated term/course data across majors.
+- Coalesce concurrent requests for the same course.
+- Keep source observation dates when reusing aggregate records.
+- Report current course, loaded pages, parsed rules and errors separately.
+- Support multiple class tokens and nttitle course headings.
+- Keep the existing design, branch motion, camera, degree categories and schedules.
+- Add regression tests for aggregate-source failure, 12-major routing, identity and cache isolation.
+- Live university access is still unverified in this runtime; no account/deployment changes.
+
 # 2.2.0 local repair
 
 Implemented the actual Banner catalog form flow, including ordered multi-value POSTs, 45-second source timeouts and a 16 MB response cap. The previous 10-second/2 MB GET-only transport could not execute the supplied search.

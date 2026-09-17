@@ -4,6 +4,21 @@ Sabancı prerequisite maps with separate catalog, admission and teaching terms.
 
 ![Expanded prerequisite tree](docs/overview.png)
 
+## 2.2.1 correction
+
+Course-detail reads no longer depend on successfully downloading the full
+semester catalog. PREREQ submits a targeted query for the requested course,
+checks its catalog-term identity, and follows that result's detail link.
+A pre-existing aggregate snapshot is an optional accelerator, not a gate.
+This uses the same path for every configured major. Required course records
+load before University and elective records; visual section order is unchanged.
+
+[Change details](docs/FIX-2.2.1.md) · [Local test report](docs/TESTING-2.2.1.md)
+
+This is not a claim of complete live coverage: the runtime source check still
+fails at DNS resolution before receiving a university response. The production
+site has not been changed by this local build.
+
 ## Run locally
 
 Python 3.11 or newer. No package installation is required for the local app.
@@ -30,7 +45,7 @@ Open `preview.html` only for the explicitly offline examples. It cannot update c
 
 A catalog entry is not proof of a semester offering. A recommended course plan never creates a prerequisite arrow. Department diagrams are not used to generate the database. AND/OR, minimum grades, concurrency wording, additional conditions and unrecognized expressions are retained.
 
-The catalog adapter opens the official term selector, submits the actual term control, discovers the subject options and sends an ordered form POST. It does not send a dictionary that overwrites repeated subjects. The supplied Fall 2026 request was 74 subjects, 94 fields and 1,267 encoded bytes; runtime subjects come from the chosen term's form, not a permanent hard-coded list.
+The optional full-catalog adapter opens the official term selector, submits the actual term control, discovers the subject options and sends an ordered form POST. Individual course reads instead use the corresponding subject and exact course range from that form; a full-catalog query is not required. It does not send a dictionary that overwrites repeated subjects. The supplied Fall 2026 request was 74 subjects, 94 fields and 1,267 encoded bytes; runtime subjects come from the chosen term's form, not a permanent hard-coded list.
 
 Degree pages retain their unusual `degree-detail?SU_DEGREE.p_degree_detail?...` URL format. Each of the 12 configured majors has its own program identifier. The response must confirm the requested program and admission term. Linked pools are followed individually; missing pools remain unknown, and a failed refresh does not replace a previous complete snapshot.
 

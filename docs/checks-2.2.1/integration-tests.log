@@ -1,0 +1,42 @@
+PASS Non-EE selection loads its own parsed degree through actual API
+PASS Admission year stays 2024 while catalog term is 202601
+PASS All five sections initially closed
+PASS Background catalog/details use actual service and parser
+PASS Parsed Banner relationship creates a CS201 to CS204 edge
+PASS Newly loaded prerequisite expansion preserves camera
+PASS Detail pane retains minimum grade and separate laboratory
+PASS Local plan can be edited without sending markers upstream
+PASS Dynamic Schedule is read separately and displays CRN plus instructor
+PASS Prerequisite cache and schedule cache have separate keys
+PASS Reset closes everything but keeps the plan
+PASS Simulated persisted browser storage restores plan
+PASS Reload leaves every section closed
+Prerequisite detail check failed (course:202602:CS 303): The source does not confirm the selected catalog/schedule term.
+Prerequisite detail check failed (course:202602:MATH 101): The source does not confirm the selected catalog/schedule term.
+Prerequisite detail check failed (course:202602:CS 201): The source does not confirm the selected catalog/schedule term.
+PASS Changing catalog semester immediately clears earlier-term edges
+PASS Changing catalog semester does not change admission or saved plan
+JS errors: []
+PASS Frontend completes integration test without JavaScript exceptions
+{
+  "passed": 16,
+  "checks": [
+    "Non-EE selection loads its own parsed degree through actual API",
+    "Admission year stays 2024 while catalog term is 202601",
+    "All five sections initially closed",
+    "Background catalog/details use actual service and parser",
+    "Parsed Banner relationship creates a CS201 to CS204 edge",
+    "Newly loaded prerequisite expansion preserves camera",
+    "Detail pane retains minimum grade and separate laboratory",
+    "Local plan can be edited without sending markers upstream",
+    "Dynamic Schedule is read separately and displays CRN plus instructor",
+    "Prerequisite cache and schedule cache have separate keys",
+    "Reset closes everything but keeps the plan",
+    "Simulated persisted browser storage restores plan",
+    "Reload leaves every section closed",
+    "Changing catalog semester immediately clears earlier-term edges",
+    "Changing catalog semester does not change admission or saved plan",
+    "Frontend completes integration test without JavaScript exceptions"
+  ],
+  "scope": "Chromium uses an explicit test binding to the real WSGI app, service and parsers with synthetic upstream responses. Saved browser storage is simulated. Separate HTTP smoke checks use loopback sockets. NOT a live university, real browser-network or real storage persistence test."
+}

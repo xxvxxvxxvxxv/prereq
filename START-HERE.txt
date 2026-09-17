@@ -1,21 +1,29 @@
-PREREQ 2.2 - local connector repair
+PREREQ 2.2.1 - independent prerequisite lookups
 
-Nothing has been uploaded or deployed. This package does not access GitHub.
+This package changes PREREQ only. No account was accessed and no deployment
+was made while producing it.
 
-Local application (Python 3.11+):
-  python3 start.py
+For an existing 2.2 installation, the production code changes are only:
+  prereq/__init__.py
+  prereq/app.py
+  prereq/banner.py
+  prereq/service.py
+  web/app.js
 
-Offline example only:
-  python3 start.py --offline
+No change to Render environment settings, hosting, domain or credentials is
+required by this patch. Python 3.11+ remains supported. The /health response
+reports 2.2.1 after this version is actually deployed by its operator.
 
-The main header selects major + first admission term.
-The Catalog selector chooses the prerequisite rules' term.
-Semester sections in a course's details uses the Dynamic Schedule separately.
+The full-catalog-first dependency is removed. All majors use the same
+course-specific source reader; validated term/course facts are shared.
 
-Read docs/TESTING.md before treating this as a verified live release.
-The build environment could not resolve the university hostname. The exact
-POST connector is implemented and tested locally, but live all-major fetching
-has not been demonstrated here. Other majors are not silently given EE data.
+Local run: python3 start.py
+Tests: python3 -m unittest discover -s tests -v
 
-Do not upload a diagnostic workflow or change account permissions to use this.
-No GitHub or deployment helper is included.
+The EE example was bundled data, not proof of successful live retrieval.
+This patch does not add fabricated prerequisites or relabel old rules with a
+new term. Exact-source server behavior still needs live verification because
+this runtime cannot resolve the university host. Read docs/TESTING-2.2.1.md.
+
+This is a complete local source package, not an already-published website.
+No GitHub automation or publishing helper is included.

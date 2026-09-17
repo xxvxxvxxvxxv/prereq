@@ -1,0 +1,13 @@
+{
+  "version": "2.2.0",
+  "fixture": "SYNTHETIC, not a university response",
+  "requested": "course:202601:BIO 303",
+  "ok": false,
+  "error": "SYNTHETIC: whole-catalog discovery unavailable",
+  "calls": [
+    {
+      "method": "GET",
+      "url": "https://suis.sabanciuniv.edu/prod/bwckctlg.p_disp_dyn_ctlg"
+    }
+  ]
+}

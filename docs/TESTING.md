@@ -1,3 +1,11 @@
+# Verification reports
+
+For 2.2.1 use [TESTING-2.2.1.md](TESTING-2.2.1.md).
+
+The report below describes the earlier 2.2.0 build, not the current test run.
+
+---
+
 # PREREQ 2.2 local repair: verification report
 
 ## Result

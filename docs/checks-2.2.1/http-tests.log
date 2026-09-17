@@ -1,0 +1,29 @@
+PASS Local HTTP health endpoint serves version 2.2.1
+PASS Application HTML is served, not the offline preview
+PASS CSP and embedding protections survive real HTTP
+PASS Live application uses the empty expansion set
+PASS API is present with 12 program options
+PASS Matching bundled degree remains available during offline operation
+PASS HTTPS public Origin refresh works through an HTTP socket
+PASS Unrelated Origin fails through real HTTP
+PASS Unrelated Render tenant hostname is rejected
+PASS Private cache files are not publicly served
+PASS Public API responses are not cacheable
+{
+  "passed": 11,
+  "checks": [
+    "Local HTTP health endpoint serves version 2.2.1",
+    "Application HTML is served, not the offline preview",
+    "CSP and embedding protections survive real HTTP",
+    "Live application uses the empty expansion set",
+    "API is present with 12 program options",
+    "Matching bundled degree remains available during offline operation",
+    "HTTPS public Origin refresh works through an HTTP socket",
+    "Unrelated Origin fails through real HTTP",
+    "Unrelated Render tenant hostname is rejected",
+    "Private cache files are not publicly served",
+    "Public API responses are not cacheable"
+  ],
+  "scope": "Loopback WSGI HTTP with hosted Host/Origin headers, offline service; not a Gunicorn or live Render test."
+}
+11 loopback HTTP checks passed.

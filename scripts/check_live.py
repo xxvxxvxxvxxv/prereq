@@ -8,6 +8,7 @@ import argparse,json,sys,tempfile,time
 from datetime import datetime,timezone
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
+from prereq import __version__
 from prereq.catalog import PROGRAM_MAP,TERM_RE,code
 from prereq.network import OfficialClient
 from prereq.service import CatalogService
@@ -28,9 +29,9 @@ def main():
     records=[]
     with tempfile.TemporaryDirectory(prefix='prereq-source-check-') as temp:
         service=CatalogService(ROOT,Path(temp)/'catalog.sqlite3',client=OfficialClient())
-        stages=[('catalog',f'catalog:{args.catalog_term}'),
+        stages=[('prerequisite',f'course:{args.catalog_term}:{cid}'),
                 ('degree',f'degree:{args.program}:{args.admission}'),
-                ('prerequisite',f'course:{args.catalog_term}:{cid}'),
+                ('catalog',f'catalog:{args.catalog_term}'),
                 ('schedule',f'schedule:{args.schedule_term}:{cid}')]
         try:
             for stage,key in stages:
@@ -55,7 +56,7 @@ def main():
                         records.append({'stage':next_stage,'key':next_key,'ok':False,'skipped':True,'reason':'Stopped after upstream/network refusal; no repeated attempts.'})
                     break
         finally:service.close()
-    report={'version':'2.2.0','allVerified':all(x['ok'] for x in records),'checks':records,
+    report={'version':__version__,'allVerified':all(x['ok'] for x in records),'checks':records,
             'scope':'Direct, anonymous read-only source checks from this runtime. No account or deployment operations.'}
     args.report.parent.mkdir(parents=True,exist_ok=True);args.report.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     return 0 if report['allVerified'] else 1

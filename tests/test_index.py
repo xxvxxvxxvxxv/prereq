@@ -26,9 +26,10 @@ class IndexTests(unittest.TestCase):
     def test_no_degree_does_not_substitute_another_major(self):
         r=self.s.graph_index('BSCS','202401')
         self.assertIsNone(r['data']);self.assertFalse(r['meta']['refreshing'])
-    def test_university_and_required_are_indexed_before_electives(self):
+    def test_required_then_university_are_indexed_before_electives(self):
         d=self.s.fallback('degree:BSEE:202401');codes=self.s._index_codes(d)
-        self.assertEqual(len(codes),624);self.assertLess(codes.index('IF 100'),codes.index('EE 202'))
+        self.assertEqual(len(codes),624);self.assertLess(codes.index('EE 202'),codes.index('IF 100'))
+        self.assertLess(codes.index('IF 100'),codes.index('EE 302'))
         self.assertLess(codes.index('EE 202'),codes.index('EE 302'))
     def test_index_endpoint_requires_same_origin_header_and_valid_query(self):
         app=App(service=self.s)

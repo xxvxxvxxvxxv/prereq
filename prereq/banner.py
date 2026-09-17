@@ -35,6 +35,18 @@ def catalog_form(term: str, subjects: list[str]) -> list[tuple[str, str]]:
     return fields
 
 
+def course_form(cid: str, term: str) -> list[tuple[str, str]]:
+    """The captured Banner search form, restricted to one exact course.
+
+    Repeated dummy/select fields are retained. The response must still prove
+    the term and course identity; submitting a query is not validation.
+    """
+    subject, number = code(cid).split()
+    fields = catalog_form(term, [subject])
+    return [(k, number if k in {'sel_crse_strt', 'sel_crse_end'} else v)
+            for k, v in fields]
+
+
 def forms(html: str, source: str):
     d = Document(html)
     return [(n, urljoin(source, unescape(n.attrs.get('action', '')))) for n in d.nodes if n.tag == 'form']
@@ -110,7 +122,7 @@ def _term_check(d: Document, term: str):
     if not TERM_RE.fullmatch(term):
         raise CatalogError('Invalid catalog term.')
     # Look in the page header, not a course's description or old-offering list.
-    headers = [n for n in d.nodes if 'ddtitle' in n.attrs.get('class', '').split()]
+    headers = [n for n in d.nodes if {'ddtitle', 'nttitle'} & set(n.attrs.get('class', '').split())]
     limit = headers[0].start if headers else 10**9
     header = clean(' '.join(t for p, t in d.tokens if p < limit))
     season = ['Fall','Spring','Summer'][int(term[-1])-1]
@@ -256,8 +268,8 @@ def parse_detail(html: str, cid: str, term: str, source: str):
         raise CatalogError('Course detail URL does not match the requested course and term.')
     d = Document(html)
     _term_check(d, term)
-    heads = [n for n in d.nodes if 'ddtitle' in n.attrs.get('class', '').split()]
-    heading = next((n.text() for n in heads if re.search(r'\b'+re.escape(cid)+r'\b', n.text())), None)
+    heads = [n for n in d.nodes if {'ddtitle', 'nttitle'} & set(n.attrs.get('class', '').split())]
+    heading = next((n.text() for n in heads if re.match(r'^'+re.escape(cid)+r'(?=\s|[-–:]|$)', n.text())), None)
     if not heading:
         # Some Banner templates use h2 rather than ddtitle.
         heading = next((n.text() for n in d.nodes if n.tag in {'h1','h2','h3'} and re.match(re.escape(cid)+r'\b', n.text())), None)
@@ -353,6 +365,33 @@ class BannerAdapter:
         parsed = parse_entries(result, term, source)
         parsed['subjects'] = subjects
         return parsed
+
+
+    def course(self, cid, term, item=None):
+        """Read one course without fetching the university-wide catalog first.
+
+        Reuse a checked index link when available. Otherwise submit the exact
+        captured public search form with a single subject and course range.
+        Both paths validate the response, not just requested identifiers.
+        """
+        cid = code(cid)
+        if not TERM_RE.fullmatch(term):
+            raise CatalogError('Select a valid catalog term.')
+        if item is not None:
+            target = item.get('source', '')
+            if _detail_identity(target) != (cid, term):
+                raise CatalogError('Cached detail link does not match the course and catalog term.')
+            html, source = self.read(target)
+            return parse_detail(html, cid, term, source)
+        html, source = self.read(CATALOG_SEARCH, course_form(cid, term))
+        parsed = parse_entries(html, term, source)
+        # Banner may include companion records (for example a laboratory).
+        # Select the exact identity rather than requiring a one-row response.
+        if cid not in parsed['courses']:
+            raise CatalogError('The course search did not return ' + cid + '. No other course was substituted.')
+        if cid in parsed.get('details', {}):
+            return parsed['details'][cid]
+        return self.course(cid, term, parsed['courses'][cid])
 
     def schedule(self, cid, term, links=()):
         results = []
