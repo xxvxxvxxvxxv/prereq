@@ -1,2 +1,1 @@
-"""Prereq: source-backed, local-first Sabancı curriculum explorer."""
-__version__ = '2.1.0'
+__version__ = "2.2.0"

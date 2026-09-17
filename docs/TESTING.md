@@ -1,67 +1,62 @@
-# Version 2.1 test report
+# PREREQ 2.2 local repair: verification report
 
-Observation date: 17 September 2026. Results below describe checks that were actually executed. They do not certify live catalog accuracy, public-load capacity or a deployed hosting account.
+## Result
 
-| Executed check | Result |
-| --- | --- |
-| Python unit/integration tests | 70 passed |
-| Node pure-model tests | 26 passed |
-| Chromium browser assertions | 48 passed |
-| Real loopback WSGI HTTP checks | 11 passed |
-| JavaScript/Python syntax and shell syntax | Passed |
-| Render/Compose YAML parsing | Passed locally, not submitted to Render validation |
-| Desktop and 390 × 844 mobile screenshots | Rendered and reviewed |
+| Check | Result | Scope |
+|---|---:|---|
+| Python regression, parser, service and transport tests | 160 passed | Real saved BIO degree HTML plus explicitly synthetic Banner fixtures and mocked transport |
+| JavaScript model tests | 30 passed | Actual graph model, missing-data behavior, local-plan validation and metadata priority |
+| Chromium interface checks | 48 passed | Actual HTML/CSS/JS; all sections closed; camera coordinates and animated frames measured; mobile and reduced-motion checks |
+| Chromium-to-application integration checks | 16 passed | Browser test binding to actual WSGI app/service/parsers; synthetic university responses; simulated persisted browser storage |
+| Loopback HTTP checks | 11 passed | Actual local HTTP socket and WSGI app; offline source service; Host/Origin/CSP checks |
+| Direct live university source check | NOT PASSED | DNS lookup failed before a catalog response was received |
 
-## Startup behavior regression
+These are not 265 live university tests. The Python suite and browser harness deliberately distinguish the supplied real degree HTML from synthetic catalog/schedule examples. Counts describe local checks only. The integration harness does not prove the real Banner HTML matches every tested template.
 
-The initial map contains exactly five collapsed section nodes and no course nodes or edges. The course detail panel is closed. Opening University does not automatically open course branches or other headings. A startup with a saved major/admission-term selection also starts closed while keeping saved course markers. Returning from the List view through the degree chooser returns to a collapsed Map. Reset closes all branches and the detail panel without deleting the plan.
+## Specific repairs tested
 
-The saved-startup test uses a simulated localStorage object with values carried into a second initialization. It is a regression test of the application's restoration logic, not a native disk-persistence test.
+The exact captured Fall 2026 POST encodes to 1,267 bytes with 94 ordered fields and 74 subjects. Repeated subject/dummy fields and blank filters are preserved. Term controls named `cat_term_in`, `term_in` or `p_term` are read from the actual form. Runtime subjects are discovered from the selected term, not blindly reused from the capture.
 
-## Motion regression retained
+The transport passes a 45-second timeout, accepts a 4.1 MB test response, rejects over-16-MB responses, closes connections, bounds cookies, validates redirects, and stops on actual 401/403/429/503 and recognized sign-in/challenge pages. Public-query mode and optional robots-exclusion mode have separate tests.
 
-The browser harness samples the actual SVG viewport and clicked-node transforms over animation frames. Opening and closing course branches preserves camera translation, camera scale and the clicked anchor, including after manual panning and zooming. Opening a section also preserves the camera. Intermediate positions and opacities verify animation rather than an instant swap. Rapid toggles settle without duplicate node IDs. Elective-pool and keyboard collapse paths retain the same invariant. Fit, section navigation and Reset are explicit navigation actions and can move the camera.
+Degree parsing recognizes the exact two-question-mark wrapper links from the supplied BIO HTML. Its 11 required courses and embedded University choices are parsed; unavailable elective pools stay unknown. Synthetic fixtures exercise each of the 12 program identifiers and preserve the selected major/admission identity. This does not establish 12 successfully retrieved live datasets.
 
-A controlled mocked index response adds a previously unknown relationship without changing the viewport. This tests the frontend update path, not the real university connection.
+Course-rule records are keyed by catalog term and course; schedule records by teaching term and course. Unversioned records are not silently substituted into a selected catalog term. Wrong course/term responses and unknown requirement syntax fail closed. Catalog presence is not used as evidence of offering status.
 
-## Hosting regression tests
+The interface preserves its monochrome design, subject-colored dots, collapsed startup and 320 ms transitions. Browser checks sample camera coordinates across expansion/collapse and background data updates. Actual current-catalog metadata takes precedence over a degree-pool display title. Partial data does not silently erase local markers.
 
-New Python tests cover exact Render hostname registration; rejection of another Render tenant and malformed injected hostname; explicit custom-domain permission; HTTPS Origin validation through an HTTP WSGI connection; rejection of insecure/foreign Origins and spoofed forwarded headers; unchanged localhost behavior; invalid public-scheme rejection; Gunicorn port/thread/worker limits and non-wildcard forwarded-header configuration; and a Free-only, single-web-service Blueprint.
+## Live attempt
 
-The portable `scripts/http_smoke.py` starts a real loopback WSGI server in offline mode. Its 11 checks verify the application HTML rather than the standalone preview, versioned health endpoint, collapsed-state application script, API presence, matching seed availability, response headers, hosted HTTPS Origin acceptance, foreign Origin rejection, foreign Host rejection, private cache non-exposure and no-store API responses. It sends explicit Host/Origin values over the loopback connection to exercise the managed-proxy configuration path. It does not start Gunicorn or provide TLS.
+`docs/live-source-check.json` contains the actual result:
 
-## Existing coverage retained
+```text
+DNS lookup failed for suis.sabanciuniv.edu. No catalog response was received.
+```
 
-Python tests cover program/cohort identity, course/term validation, pool discovery, atomic refresh, retaining original dates after refresh failure, no cross-major fallback, cache priority, background index single-flight and failure limits. Prerequisite parsing tests cover mixed AND/OR, minimum grades, explicit none versus unknown, contextual unknown conditions, corequisites, split-core sections and additional requirements. Parser fixtures are reconstructed HTML, not archived upstream responses.
+The checker stopped after the network failure rather than retrying every source. Degree, prerequisite-detail and schedule checks were marked skipped, not passed. Changing a timeout cannot repair this environment's failed DNS resolution. The live result is not disguised by unit-test success.
 
-Targeted security tests cover approved upstream hosts/paths/parameters, credentials/port restrictions, private DNS addresses, robots denial/failure, required API request header, Host/Origin checks, traversal and duplicate-query rejection, static-file allowlisting and response headers. These are targeted checks, not an independent penetration test. The hosted per-socket-peer rate limiter is deliberately conservative; a reverse proxy may aggregate visitors. Public load testing and a deployment-specific trusted-client-IP configuration remain outstanding.
+## Browser-environment restriction
 
-Model tests cover forward direction, University-first ordering, absence of category prerequisite edges and course-number folders, course choices, stable occurrence IDs, cycle guards, search/status structure, subject dots, incoming ALL/OR logic, absence of corequisite unlock edges, partial coverage and plan validation.
+The installed Chromium blocks direct navigation to loopback URLs. The test harness does not modify or work around that administrative policy. It renders the app in an isolated test page and explicitly calls the local WSGI application through a test binding. A separate Python HTTP smoke test exercises loopback sockets. Browser localStorage persistence is simulated; no claim of real disk-persistence testing is made.
 
-Chromium also exercises search, full prerequisite/corequisite details, source coverage, marking, filters, JSON import/export, wrong-cohort rejection, unknown prerequisites, unavailable-major recovery, mobile layout and pointer behavior, reduced motion and literal rendering of malicious-looking source strings. Exact browser assertion names are in `browser-checks.json`; loopback names are in `http-checks.json`.
+## What was not verified
 
-## Validation boundaries
-
-The browser harness uses `page.set_content` with the generated standalone HTML and a Map-backed localStorage substitute on about:blank. Direct file navigation is blocked by this environment's browser policy. Real browser disk persistence and production CSP enforcement through a deployed full-page navigation are not claimed.
-
-A direct source check was attempted with `scripts/check_live.py --program BSEE --term 202401`; it failed at DNS resolution with `Temporary failure in name resolution`. This release leaves the bundled EE / Fall 2024 dataset unchanged: 624 course options and 57 detail records. Live fetching/indexing across all 12 configured majors remains unverified. Source dates must not be interpreted as a new successful university fetch caused by this UI release.
-
-Production Gunicorn installation could not be completed because package-host DNS resolution also failed. Its configuration was tested as Python code, but a Gunicorn process and Docker production image were not run. Hosting documentation was checked against official provider docs; the actual Render Blueprint, domain verification, TLS termination and hosted-to-university connection were not exercised. No GitHub repository, cloud service or domain was created by these tests.
-
-Not executed: complete live catalog crawl, public traffic load test, independent security/accessibility audit, physical-device testing, Safari/Firefox, actual macOS/Windows launchers, native disk-persistence test or cloud deployment.
+No production Gunicorn launch, Render deployment, Cloudflare deployment, current live dataset for all majors, fully parsed real Banner POST result, university-approved unattended crawling arrangement, or independent security audit has been completed by these local checks. No GitHub or other account was accessed or modified during this repair.
 
 ## Reproduce
-
-From the extracted project root:
 
 ```sh
 python3 -m unittest discover -s tests -v
 node --test tests/model.test.cjs
-python3 scripts/build_seed.py
-python3 scripts/build_preview.py
 python3 scripts/http_smoke.py
-python3 scripts/browser_smoke.py --chromium /path/to/chromium --screenshots docs
-python3 scripts/check_live.py --program BSEE --term 202401
+python3 scripts/browser_smoke.py --chromium /path/to/chromium
+python3 scripts/integration_smoke.py --chromium /path/to/chromium
 ```
 
-Node is needed only for JavaScript tests. The browser command needs the optional Playwright package and a compatible Chromium executable. The final command performs a real source check and should fail visibly when the official server cannot be reached or access is blocked. The other suites use local data or controlled mocks.
+The optional read-only source checker uses the production adapters and a temporary cache:
+
+```sh
+python3 scripts/check_live.py --program BSBIO --term 202401 --catalog-term 202601 --course "BIO 303"
+```
+
+It neither deploys nor changes an account. A nonzero exit and `allVerified: false` must not be presented as success.

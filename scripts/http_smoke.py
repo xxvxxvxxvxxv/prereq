@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory() as temp,patch.dict(os.environ,{'PREREQ_OFFLIN
         checks.append(name);print('PASS',name)
     try:
         status,headers,body=req('/health')
-        check('Hosted health endpoint serves version 2.1.0',status==200 and json.loads(body)['version']=='2.1.0')
+        check('Hosted health endpoint serves version 2.2.0',status==200 and json.loads(body)['version']=='2.2.0')
         status,headers,body=req('/')
         check('Application HTML is served, not the offline preview',status==200 and b'__PREVIEW_SEED__' not in body and b'src="app.js"' in body)
         check('CSP and embedding protections survive real HTTP',headers.get('X-Frame-Options')=='DENY' and "frame-ancestors 'none'" in headers.get('Content-Security-Policy',''))

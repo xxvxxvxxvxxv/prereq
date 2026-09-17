@@ -13,3 +13,8 @@ dialog{color:#fff;background:#080808;border:1px solid #383838;border-radius:11px
 /* Controls remain legible while the map pans underneath. */
 #graph-region::before,#graph-region::after{content:"";position:absolute;left:0;right:0;pointer-events:none;z-index:2}#graph-region::before{top:0;height:108px;background:linear-gradient(#000 80%,transparent)}#graph-region::after{bottom:0;height:70px;background:linear-gradient(transparent,#000 55%)}
 @media(max-width:600px){#graph-region::before{height:144px}#graph-region::after{height:63px}}
+
+/* A separate clock for catalog rules; no graph/camera style changes. */
+.catalog-picker{display:flex;align-items:center;gap:9px;color:#aaa;font-size:12px;white-space:nowrap}.catalog-picker select{max-width:220px;color:#fff;background:#090909;border:1px solid #303030;border-radius:6px;padding:9px}.schedule-select{max-width:100%;color:#fff;background:#080808;border:1px solid #303030;border-radius:5px;padding:9px;margin:4px 0 12px}.schedule-row{padding:10px 0;border-bottom:1px solid #222}.schedule-row .source-link{font-size:12px;white-space:normal}@media(max-width:700px){.catalog-picker{gap:6px;font-size:10px}.catalog-picker select{max-width:160px;font-size:11px;padding:7px}.toolbar{flex-wrap:wrap;gap:7px}.map-nav{top:112px}.toolbar-note{display:none}}
+
+@media(max-width:600px){.map-nav{top:139px}#graph-region::before{height:180px}.list-region{top:160px}}

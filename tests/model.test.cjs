@@ -46,3 +46,19 @@ test('opening a section does not automatically expand any course or another sect
   assert.ok(g.nodes.filter(n=>n.kind==='course').every(n=>!n.open));
   assert.equal(g.edges.length,0);
 });
+test('unknown elective pools display question marks rather than verified zero',()=>{
+  const bio=seed.degrees['BSBIO:202401'];const g=M.forwardForest(bio,{},new Set());
+  assert.equal(g.nodes.find(n=>n.id==='section:core').count,'?');assert.equal(g.nodes.find(n=>n.id==='section:required').count,11);
+});
+test('saved local markers survive an incomplete degree refresh',()=>{
+  const bio=seed.degrees['BSBIO:202401'],value={schemaVersion:1,program:'BSBIO',term:'202401',marks:{'BIO 421':'planned'}};
+  assert.equal(M.validatePlan(value,bio,{keepUnlisted:true})['BIO 421'],'planned');
+  assert.throws(()=>M.validatePlan(value,bio));
+});
+test('keeping local markers does not accept malformed or prototype keys',()=>{
+  for(const cid of ['__proto__','../../x','CS204'])assert.throws(()=>M.validatePlan({schemaVersion:1,program:'BSEE',term:'202401',marks:{[cid]:'planned'}},degree,{keepUnlisted:true}));
+});
+test('current catalog metadata takes precedence over degree pool display title',()=>{
+  const d={'EE 202':{...details['EE 202'],title:'Catalog title fixture'}};
+  const g=M.forwardForest(degree,d,new Set(['section:required']));assert.equal(g.nodes.find(n=>n.label==='EE 202').subtitle,'Catalog title fixture');
+});

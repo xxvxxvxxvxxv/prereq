@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from urllib.parse import urlsplit
 from unittest.mock import patch
-from prereq.catalog import CatalogError,degree_url,course_url
+from prereq.catalog import CatalogError,degree_url,course_url,catalog_link
 from prereq.network import OfficialClient,validate_url,PinnedHTTPS
 from prereq.service import CatalogService,Store
 from prereq.app import App,ROOT
@@ -20,7 +20,7 @@ class MockOfficial:
     def get(self,url):
         self.urls.append(url)
         if url==degree_url('BSCS'): return terms(),url
-        if url==degree_url('BSCS','202401'): return degree(),url
+        if catalog_link(url)[0]=='su_degree.p_degree_detail' and catalog_link(url)[1].get('P_PROGRAM')==['BSCS']: return degree(),url
         for cat,cid in [('core','CS 201'),('area','CS 300'),('free','ECON 201')]:
             if url==pool_url('BSCS','202401',cat):
                 if cat=='area' and self.fail_area: return '<p>Sign in</p>',url
@@ -128,14 +128,14 @@ class NetworkTests(unittest.TestCase):
             with patch('socket.getaddrinfo',return_value=[(socket.AF_INET,socket.SOCK_STREAM,6,'',(ip,443))]):
                 with self.assertRaises(CatalogError):PinnedHTTPS('suis.sabanciuniv.edu').connect()
     def test_robots_denial(self):
-        c=OfficialClient();c._request=lambda url:(200,'User-agent: *\nDisallow: /prod/',url)
+        c=OfficialClient(policy='robots');c._request=lambda url,*args:(200,'User-agent: *\nDisallow: /prod/',url)
         with self.assertRaises(CatalogError):c.get(course_url('EE 202'))
     def test_robots_error_fails_closed(self):
-        c=OfficialClient();c._request=lambda url:(503,'',url)
+        c=OfficialClient(policy='robots');c._request=lambda url,*args:(503,'',url)
         with self.assertRaises(CatalogError):c.get(course_url('EE 202'))
     def test_robots_404_allows_public_fetch(self):
-        c=OfficialClient()
-        c._request=lambda url:(404,'',url) if url.endswith('robots.txt') else (200,'<p>public</p>',url)
+        c=OfficialClient(policy='robots')
+        c._request=lambda url,*args:(404,'',url) if url.endswith('robots.txt') else (200,'<p>public</p>',url)
         self.assertEqual(c.get(course_url('EE 202'))[0],'<p>public</p>')
     def test_offline_never_connects(self):
         c=OfficialClient(offline=True)

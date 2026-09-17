@@ -1,102 +1,94 @@
 # PREREQ
 
-A Sabancı prerequisite map. Start with University courses and Major required courses, then expand a course to see the courses that list it as a prerequisite.
+Sabancı prerequisite maps with separate catalog, admission and teaching terms.
 
-![Initial map with all five branches collapsed](docs/overview.png)
+![Expanded prerequisite tree](docs/overview.png)
 
-## Open it
+## Run locally
 
-Open **`preview.html`** for the self-contained offline version. No installation is needed.
-
-For the local app with source checking, use Python 3.11 or newer:
+Python 3.11 or newer. No package installation is required for the local app.
 
 ```sh
 python3 start.py
 ```
 
-Windows:
-
-```powershell
-py -3 start.py
-```
-
-The app opens at `http://127.0.0.1:8765`. Leave the terminal running and stop with Ctrl+C. There is no npm build, API key, university login, database setup or Python package installation for local use. `START.command` and `START.bat` are optional launch helpers.
-
-To use only bundled/cached facts and make no university requests:
+For no external requests:
 
 ```sh
 python3 start.py --offline
 ```
 
-## The map
+Open `preview.html` only for the explicitly offline examples. It cannot update course data.
 
-The primary map now shows **prerequisite → dependent course** relationships. There are no subject folders or artificial course-number ranges. University courses appear first, Major required courses follow, and Core / Area / Free elective pools are lower down. Actual HUM and mathematics alternatives remain choices, not lists of courses you must all take.
+## Sources
 
-All five sections start **closed** on a fresh load, when restoring the selected major, and after Reset. Reopening a degree also returns to the Map view. Saved Planned/Completed markers are retained; branch expansion is not restored. Opening a section does not automatically open its courses.
+| Source | Meaning | Cache key |
+|---|---|---|
+| SUIS Banner Course Catalog (`bwckctlg`) | Course details and prerequisite/corequisite expressions for a chosen catalog term | Catalog term + course code |
+| Official degree requirements | University, Required, Core, Area and Free requirements for the chosen program and first admission term | Program + admission term |
+| SUIS Dynamic Schedule (`bwckschd`) | Actual sections, CRNs, meeting times and instructors, checked from the course panel | Teaching term + course code |
 
-Click a course row or `+` to reveal its outgoing branches. Click the small `i` for credits, minimum grades, full prerequisite logic, corequisites and the official source. Search opens a focused forward map. The course panel also offers a separate upstream prerequisite-chain view.
+A catalog entry is not proof of a semester offering. A recommended course plan never creates a prerequisite arrow. Department diagrams are not used to generate the database. AND/OR, minimum grades, concurrency wording, additional conditions and unrecognized expressions are retained.
 
-`ALL`, `OR` and `ALL/OR` distinguish combined requirements from alternatives. A single arrow is one prerequisite relationship, **not proof of registration eligibility**. A course can appear in several branches; every occurrence shares the same Planned/Completed marker. Courses displayed by default are not automatically marked completed.
+The catalog adapter opens the official term selector, submits the actual term control, discovers the subject options and sends an ordered form POST. It does not send a dictionary that overwrites repeated subjects. The supplied Fall 2026 request was 74 subjects, 94 fields and 1,267 encoded bytes; runtime subjects come from the chosen term's form, not a permanent hard-coded list.
 
-The background is black and text is white. Only the subject dots are colored: EE blue, BIO green, CS red, ME purple, with additional subject colors for IE, MAT and DSA.
+Degree pages retain their unusual `degree-detail?SU_DEGREE.p_degree_detail?...` URL format. Each of the 12 configured majors has its own program identifier. The response must confirm the requested program and admission term. Linked pools are followed individually; missing pools remain unknown, and a failed refresh does not replace a previous complete snapshot.
 
-### Motion and navigation
+## Fetch behavior
 
-Branches expand and collapse with a 320 ms transition. The viewport translation and zoom do not change during either action, including after manual panning or zooming. Only explicit navigation, Fit, Reset, search focus and changing the selected degree can reposition the camera. Resizing preserves the world coordinate at the viewport center. Reduced-motion preferences disable animations.
+The public-query mode requests only allowlisted, public, read-only university routes. It no longer mistakes an app-side robots exclusion check for an HTTP access failure. This does not imply university approval to run an unattended crawler. The university's SUIS robots file excludes crawling. Operators who require robots-exclusion mode can set `PREREQ_FETCH_POLICY=robots`; on SUIS that mode pauses automated reads. Every mode stops on actual access refusals, rate limits, sign-in or challenge pages. No authentication or technical access control is bypassed.
 
-Drag or touch-drag to move the map. Scroll or pinch to zoom. `/` searches; `F` fits; `+` / `-` zoom; Tab then Enter/Space expands; `I` opens details; arrow keys pan the focused map. University / Major required / Electives shortcuts move to those sections on request. List view remains available.
+Source requests are serialized, spaced at least 1.5 seconds apart and bounded to 16 MB. The socket timeout defaults to 45 seconds. Only anonymous cookies issued to this client during the public form flow are retained in memory. No user cookies, credentials, browser impersonation, external proxy or registration-submission route is used.
 
-Plans stay in browser storage, separated by major and first admission term. JSON import/export is supported. These marks do not verify grades, GPA, waivers, equivalences or degree-credit allocation.
+Cached data is rechecked on use after 12 hours. Indexing is shared, bounded and incremental, not instant. A failed check preserves the source's previous date. Section checks are on demand in the course panel. Local course markers are not sent upstream and are not proof of grades, overrides or registration eligibility.
 
-## Data coverage
+## Coverage and verification
 
-The bundled degree is **Electronics Engineering / Fall 2024 admission**, observed on 17 September 2026. It contains 624 course options: 24 University, 15 Required, 39 Core, 140 Area and 406 Free. These are pool option counts, not a mandatory-course total.
+**This is a local repair build, not a verified live-university release.** The direct runtime source check failed at DNS resolution before receiving any catalog response. Live success across the 12 majors has not been demonstrated from this environment.
 
-Version 2 includes **57 course-detail records**. Of these, 56 prerequisite expressions are parseable, including explicitly listed no-prerequisite cases. ENS 491 stays context-dependent because its description contains program, admission-year and completed-credit conditions. The other 567 courses have no bundled detail. The visible coverage counter reports this, and missing data never creates guessed edges.
+Included saved data:
 
-The local backend discovers the selected degree's actual course-pool links and indexes course pages into a shared cache, prioritizing University and Required courses. The first full index takes time. Partial results are displayed as they arrive without recentering the map. Source traffic is serialized, rate-limited and bounded. Failed checks retain the previous record and its original observation date.
+- EE / Fall 2024: the earlier 624-option degree snapshot and 57 explicitly **unversioned** prerequisite examples. They are never silently used for a selected catalog term.
+- BIO / Fall 2024: the supplied official HTML's 24 University options and 11 required courses. Its linked elective pools were not supplied and remain incomplete. The HTML import does not create prerequisites or offering claims.
+- No fabricated snapshots for other majors. They require successful official-source fetching.
 
-The cache is rechecked on use after 12 hours. The refresh control starts a degree check and the index follows the cache policy. The offline HTML never refreshes itself. Prerequisites use the **current course catalog**; first admission term selects **degree requirements**, not historical prerequisites.
+See [the test report](docs/TESTING.md) and `docs/live-source-check.json` for what was actually tested.
 
-**Verification boundary:** Python/model/browser tests and loopback HTTP responses were checked. Direct university connections failed in the build environment, so actual live indexing across the 12 configured majors remains unverified. The bundled facts were read from official public pages through the research browser, not generated by a successful scraper run. Parser fixtures are reconstructed HTML. Run this on a network that can access the official source before relying on live operation:
+## Interface
 
-```sh
-python3 scripts/check_live.py --program BSEE --term 202401
-```
+Black background, white text and subject-colored dots. Every section starts closed. Opening a course reveals dependent courses; the information button retains full prerequisite logic and separate corequisites. Expansion/collapse takes 320 ms without moving the camera. Planned/Completed markers are stored locally by major and first admission term. An incomplete source refresh cannot silently delete saved markers.
 
-## Development and tests
+The toolbar's Catalog selector chooses the prerequisite term. The header's major/admission selector chooses degree requirements. The course panel's Semester sections selector independently chooses the Dynamic Schedule term.
+
+## Development checks
 
 ```sh
 python3 -m unittest discover -s tests -v
 node --test tests/model.test.cjs
 python3 scripts/build_seed.py
 python3 scripts/build_preview.py
+python3 scripts/http_smoke.py
 ```
 
-Node 20+ is only needed for model tests, not the website. Optional browser checks:
+Optional browser tests require the development dependencies and a Chromium executable:
 
 ```sh
-python3 -m pip install -r requirements-dev.txt
-python3 -m playwright install chromium
-python3 scripts/browser_smoke.py --screenshots docs
+python3 scripts/browser_smoke.py --chromium /path/to/chromium
+python3 scripts/integration_smoke.py --chromium /path/to/chromium
 ```
 
-Use `--chromium /path/to/chromium` with a system browser. The browser harness renders the real HTML and samples animation frames, but simulates browser storage and one live-index response. It is not a live-university test. See [testing](docs/TESTING.md).
+The browser harness uses synthetic responses and simulated browser storage where needed. It does not modify browser administrative policies.
 
-## GitHub and hosting
-
-This ZIP is source code, not an already-published repository. The included helper uses your GitHub CLI login, creates a public repository and does not overwrite an existing one:
+A read-only source check using the production adapters is available for a runtime that can reach Sabancı:
 
 ```sh
-bash scripts/publish.sh
+python3 scripts/check_live.py --program BSBIO --term 202401 --catalog-term 202601 --course "BIO 303"
 ```
 
-The release includes `render.yaml`, `.python-version` and `gunicorn.conf.py` for a **Render Python web service**. Upload the extracted source to GitHub, then use **Render → New → Blueprint**. The default configuration is Free for a first hosting test; an always-on instance and persistent cache need a paid instance plus disk. No deployment or purchase has been made.
+This writes a local JSON report and uses a temporary cache. It does not upload files, run GitHub Actions, deploy, or contact any account-management API.
 
-The site gets a normal `onrender.com` address. Cloudflare is optional for a custom domain. The exact Render hostname is allowed automatically; custom domains use `PREREQ_HOSTS`. The hosted HTTPS setting retains Origin validation behind TLS termination.
+## Deployment boundary
 
-GitHub Pages and Cloudflare Pages can host `docs/index.html` as an **offline snapshot only**. They do not execute this backend. See the [complete upload, hosting and domain guide](docs/PUBLISHING.md).
+Nothing in this repair has been published or deployed. There are no GitHub workflows or publishing helpers in this package. The existing `render.yaml`, Docker files and Gunicorn configuration are kept for compatibility; merely opening or running the local project does not apply them to an account.
 
-Vanilla JavaScript, CSS and SVG; Python standard-library WSGI; SQLite. No analytics, external frontend libraries, account system or university credentials. [Architecture](docs/ARCHITECTURE.md), [sources](docs/SOURCES.md), [security](SECURITY.md).
-
-Independent student tool. Not affiliated with Sabancı University. Official Degree Evaluation remains authoritative. Software is MIT-licensed; catalog facts are attributed in [NOTICE](NOTICE).
+Independent student tool. Not affiliated with Sabancı University. Official Degree Evaluation and registration decisions remain authoritative. Software license: MIT. Source attribution: [NOTICE](NOTICE).

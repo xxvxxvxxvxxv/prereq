@@ -99,7 +99,7 @@ class App:
                 elif method!='GET':
                     return respond('405 Method Not Allowed',dict(error='Read endpoints require GET.'))
                 if path in {'/api/degree','/api/terms','/api/refresh','/api/index'}:
-                    if set(q)-{'program','term'}:
+                    if set(q)-{'program','term','catalogTerm'}:
                         raise CatalogError('Unsupported query parameter.')
                     program=q.get('program',[''])[0]
                     if program not in PROGRAM_MAP:
@@ -111,12 +111,32 @@ class App:
                         if not TERM_RE.fullmatch(term):
                             raise CatalogError('Select a valid first admission term.')
                         if path=='/api/index':
-                            return respond('200 OK',self.service.graph_index(program,term))
+                            catalog_term=q.get('catalogTerm',[None])[0]
+                            if catalog_term is not None and not TERM_RE.fullmatch(catalog_term):
+                                raise CatalogError('Invalid catalog term.')
+                            return respond('200 OK',self.service.graph_index(program,term,catalog_term))
                         key=f'degree:{program}:{term}'
+                        if refresh and q.get('catalogTerm'):
+                            ct=q['catalogTerm'][0]
+                            if not TERM_RE.fullmatch(ct): raise CatalogError('Invalid catalog term.')
+                            self.service.schedule('catalog:'+ct,True)
                 elif path=='/api/course':
-                    if set(q)!={'code'}:
+                    if not {'code'} <= set(q) or set(q)-{'code','catalogTerm'}:
                         raise CatalogError('A course code is required.')
-                    key='course:'+code(q['code'][0])
+                    cid=code(q['code'][0]); ct=q.get('catalogTerm',[None])[0]
+                    if ct is not None and not TERM_RE.fullmatch(ct): raise CatalogError('Invalid catalog term.')
+                    key=f'course:{ct}:{cid}' if ct else 'course:'+cid
+                elif path=='/api/catalog-terms':
+                    if q: raise CatalogError('No parameters accepted.')
+                    key='catalogterms:list'
+                elif path=='/api/catalog':
+                    if set(q)!={'catalogTerm'} or not TERM_RE.fullmatch(q['catalogTerm'][0]):
+                        raise CatalogError('Select a valid catalog term.')
+                    key='catalog:'+q['catalogTerm'][0]
+                elif path=='/api/schedule':
+                    if set(q)!={'term','code'} or not TERM_RE.fullmatch(q['term'][0]):
+                        raise CatalogError('Select a valid schedule term and course.')
+                    key=f"schedule:{q['term'][0]}:{code(q['code'][0])}"
                 else:
                     return respond('404 Not Found',dict(error='Unknown API endpoint.'))
                 return respond('200 OK',self.service.get(key,refresh=refresh))

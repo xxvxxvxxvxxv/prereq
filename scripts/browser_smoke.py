@@ -136,7 +136,7 @@ with sync_playwright() as p:
     page.locator('#close-course').click();detail(page,'ENS491')
     check('Contextual program/cohort conditions are visible','80 completed SU credits' in page.locator('#course-content').inner_text())
     page.locator('#close-course').click();page.locator('#source-button').click()
-    check('Sources show 57 bundled records, not fictitious complete coverage','57 bundled' in page.locator('#info-content').inner_text())
+    check('Sources distinguish unversioned examples and missing pools from live data','Unversioned examples are never silently used' in page.locator('#info-content').inner_text())
     page.locator('#close-info').click();page.locator('#change-major').click();page.locator('#major-select').select_option('BSCS');page.locator('#open-map').click()
     check('Unbundled major never receives substituted EE data','No offline snapshot' in page.locator('#empty-title').inner_text() and page.locator('[data-node]').count()==0)
     # Return to a snapshot after the empty state: keyed SVG maps must be rebuilt.
@@ -167,9 +167,11 @@ with sync_playwright() as p:
     live=browser.new_page(viewport={'width':1440,'height':900})
     mock_script='''<script>window.fetch=async function(url){
       const seed=window.__MOCK_SEED__,ok=x=>new Response(JSON.stringify(x),{headers:{'Content-Type':'application/json'}}),path=String(url);
-      if(path==='seed.json')return ok(seed);
+      // Synthetic, scoped fixture data for camera testing, not a new source snapshot.
+      if(path==='seed.json')return ok({...seed,catalogDetails:{'202601':seed.details}});
+      if(path==='api/catalog-terms')return ok({data:{terms:seed.catalogTerms},meta:{refreshing:false}});
       if(path.startsWith('api/degree'))return ok({data:seed.degrees['BSEE:202401'],meta:{state:'snapshot',observedAt:seed.observedAt,refreshing:false}});
-      if(path.startsWith('api/index'))return new Promise(resolve=>{window.__pushIndex=()=>resolve(ok({data:{program:'BSEE',term:'202401',details:{'ECON 201':{code:'ECON 201',title:'Mock dependent course',prerequisite:{type:'course',code:'MATH 101',minGrade:'D'},corequisite:{type:'none'},observedAt:'2026-09-17',origin:'test'}}},meta:{refreshing:false}}));});
+      if(path.startsWith('api/index'))return new Promise(resolve=>{window.__pushIndex=()=>resolve(ok({data:{program:'BSEE',term:'202401',catalogTerm:'202601',details:{'ECON 201':{code:'ECON 201',catalogTerm:'202601',title:'Mock dependent course',prerequisite:{type:'course',code:'MATH 101',minGrade:'D'},corequisite:{type:'none'},observedAt:'2026-09-17',origin:'test'}}},meta:{refreshing:false}}));});
       throw new Error('Unexpected mock request '+path);
     };</script>'''
     live_html=html.replace('window.__PREVIEW_SEED__=','window.__MOCK_SEED__=').replace('<head>','<head>'+mock_script,1)

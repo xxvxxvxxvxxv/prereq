@@ -1,0 +1,21 @@
+PREREQ 2.2 - local connector repair
+
+Nothing has been uploaded or deployed. This package does not access GitHub.
+
+Local application (Python 3.11+):
+  python3 start.py
+
+Offline example only:
+  python3 start.py --offline
+
+The main header selects major + first admission term.
+The Catalog selector chooses the prerequisite rules' term.
+Semester sections in a course's details uses the Dynamic Schedule separately.
+
+Read docs/TESTING.md before treating this as a verified live release.
+The build environment could not resolve the university hostname. The exact
+POST connector is implemented and tested locally, but live all-major fetching
+has not been demonstrated here. Other majors are not silently given EE data.
+
+Do not upload a diagnostic workflow or change account permissions to use this.
+No GitHub or deployment helper is included.
