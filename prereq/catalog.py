@@ -63,52 +63,6 @@ def course_url(value: str) -> str:
     return f'{HOST}/prod/sabanci_www.p_get_courses?' + urlencode(dict(
         crse_numb=number, lang='eng', levl_code='UG', subj_code=subject))
 
-
-def catalog_link(url: str) -> tuple[str, dict[str, list[str]]]:
-    """Read an official link without changing its request URL.
-
-    The university wrapper puts the operation inside the query, followed by a
-    second question mark. Ordinary query normalization loses the first field
-    or moves the operation. This is a parser only, not a network permission.
-    """
-    u = urlsplit(url)
-    if u.scheme != 'https' or u.username is not None or u.password is not None:
-        return '', {}
-    try:
-        if u.port not in (None, 443):
-            return '', {}
-    except ValueError:
-        return '', {}
-    operations = {'su_degree.p_select_term', 'su_degree.p_degree_detail',
-                  'su_degree.p_list_courses', 'sabanci_www.p_get_courses'}
-    if u.hostname == 'suis.sabanciuniv.edu':
-        pieces = u.path.split('/')
-        if len(pieces) != 3 or pieces[1] not in {'prod', 'HbbmInst'}:
-            return '', {}
-        operation, query = pieces[2].lower(), u.query
-    elif u.hostname in {'www.sabanciuniv.edu', 'sabanciuniv.edu'} and u.path == '/en/prospective-students/degree-detail':
-        operation, separator, query = u.query.partition('?')
-        # Some HTML encoders encode the nested question mark. Decode only that
-        # delimiter, never an entire query and its parameter values twice.
-        if not separator:
-            marker = re.search(r'%3f', u.query, re.I)
-            if not marker:
-                return '', {}
-            operation, query = u.query[:marker.start()], u.query[marker.end():]
-        operation = operation.lower()
-    else:
-        return '', {}
-    if operation not in operations:
-        return '', {}
-    try:
-        params = parse_qs(query, keep_blank_values=True, max_num_fields=12,
-                          strict_parsing=True)
-    except ValueError as exc:
-        raise CatalogError('Malformed official catalog link.') from exc
-    if any(len(values) != 1 for values in params.values()):
-        raise CatalogError('Duplicate fields in an official catalog link.')
-    return operation, params
-
 @dataclass
 class Node:
     tag: str
@@ -141,7 +95,6 @@ class Document(HTMLParser):
         self.stack = [self.root]
         self.pos = 0
         self.nodes: list[Node] = []
-        self.tokens: list[tuple[int, str]] = []
         self.feed(html)
         for n in self.stack:
             n.end = self.pos + 1
@@ -152,7 +105,7 @@ class Document(HTMLParser):
             while self.stack[-1].tag in close:
                 self.stack.pop().end = self.pos
         self.pos += 1
-        if len(self.nodes) > 250000 or len(self.stack) > 120:
+        if len(self.nodes) > 60000 or len(self.stack) > 120:
             raise CatalogError('Catalog HTML exceeds structural limits.')
         n = Node(tag, dict(attrs), parent=self.stack[-1], start=self.pos, end=self.pos+1)
         n.parent.children.append(n)
@@ -172,7 +125,6 @@ class Document(HTMLParser):
         self.pos += 1
         if not any(n.tag in {'script', 'style', 'noscript'} for n in self.stack):
             self.stack[-1].children.append(data)
-            self.tokens.append((self.pos, data))
     @property
     def text(self):
         return self.root.text()
@@ -199,7 +151,7 @@ def parse_terms(html: str, program: str) -> list[dict]:
             if TERM_RE.fullmatch(value):
                 terms.add(value)
         if n.tag == 'a':
-            _, q = catalog_link(n.attrs.get('href', ''))
+            q = parse_qs(urlsplit(n.attrs.get('href', '')).query)
             p = q.get('P_PROGRAM', [program])[0]
             t = q.get('P_TERM', [''])[0]
             if p == program and TERM_RE.fullmatch(t):
@@ -212,9 +164,8 @@ def course_row(row: Node, source: str) -> dict | None:
     links = []
     for a in row.all('a'):
         href = urljoin(source, a.attrs.get('href', ''))
-        operation, params = catalog_link(href)
-        if operation == 'sabanci_www.p_get_courses':
-            q = {k.lower(): v[0] for k, v in params.items()}
+        if 'sabanci_www.p_get_courses' in urlsplit(href).path.lower():
+            q = {k.lower(): v[0] for k, v in parse_qs(urlsplit(href).query).items()}
             try:
                 cid = code(q.get('subj_code', '') + q.get('crse_numb', ''))
             except CatalogError:
@@ -242,7 +193,7 @@ def course_row(row: Node, source: str) -> dict | None:
     if any(x > 120 for x in nums[:2]):
         raise CatalogError('Unexpected course credit value.')
     return dict(code=cid, title=title, ects=nums[0], credits=nums[1], faculty=faculty,
-                facultyCourse='*' in (cells[0] if cells else ''), source=links[0][1], poolSource=source)
+                facultyCourse='*' in (cells[0] if cells else ''), source=course_url(cid), poolSource=source)
 
 def leaf_rows(d: Document):
     return [n for n in d.nodes if n.tag == 'tr' and not any(n.all('tr'))]
@@ -270,9 +221,7 @@ def parse_degree(html: str, program: str, term: str, source: str) -> dict:
     match = re.search(r'Admit\s+Term\s*:\s*(Fall|Spring|Summer)\s+(\d{4})\s*[-–/]\s*(\d{4})', d.text, re.I)
     if not match or f'{match[1].title()} {match[2]}-{match[3]}' != expected:
         raise CatalogError('The degree page does not confirm the selected admission term.')
-    main_node = next(iter(d.root.all('main')), None)
-    content_end = main_node.end if main_node else d.pos + 1
-    rows = [r for r in leaf_rows(d) if main_node is None or main_node.start < r.start < content_end]
+    rows = leaf_rows(d)
     summary, total, summary_end = [], {}, 0
     for row in rows:
         cells = [c.text() for c in row.children if isinstance(c, Node) and c.tag in {'td', 'th'}]
@@ -291,7 +240,7 @@ def parse_degree(html: str, program: str, term: str, source: str) -> dict:
     labels.update({k.lower(): k for k in CATEGORIES if category(k) in {'faculty','engineering','basic'}})
     headings = []
     for n in d.nodes:
-        if n.start < summary_end or n.start >= content_end or n.tag not in {'h1','h2','h3','h4','b','strong','p','td','div','font','a'}:
+        if n.start < summary_end or n.tag not in {'h1','h2','h3','h4','b','strong','p','td','div','font','a'}:
             continue
         label = labels.get(n.text().lower())
         if label and not (n.tag == 'a' and n.attrs.get('href')):
@@ -305,12 +254,12 @@ def parse_degree(html: str, program: str, term: str, source: str) -> dict:
             continue
         if not any(h[1] == entry['label'] for h in headings):
             raise CatalogError(f"Section not found: {entry['label']}. Snapshot not replaced.")
-    if not any(category(h[1]) == 'university' for h in headings):
-        raise CatalogError('University requirement section was not found; parser update needed.')
+    if not all(any(category(h[1]) == c for h in headings) for c in main):
+        raise CatalogError('Expected degree sections were not found; parser update needed.')
     specs, pools, notes = [], {}, []
     for i, (start, label, end) in enumerate(headings):
         cat = category(label) or 'additional'
-        stop = headings[i+1][0] if i+1 < len(headings) else content_end
+        stop = headings[i+1][0] if i+1 < len(headings) else d.pos+1
         relevant_rows = [r for r in rows if start < r.start < stop]
         courses = []
         used_rows = []
@@ -321,8 +270,6 @@ def parse_degree(html: str, program: str, term: str, source: str) -> dict:
                 used_rows.append(row)
         chunks = []
         def text_between(n):
-            if n.tag in {'thead', 'script', 'style'}:
-                return
             if n.end <= end or n.start >= stop or any(r.start <= n.start < r.end for r in used_rows):
                 return
             for child in n.children:
@@ -346,8 +293,8 @@ def parse_degree(html: str, program: str, term: str, source: str) -> dict:
             if a.tag != 'a' or not start < a.start < stop:
                 continue
             href = urljoin(source, a.attrs.get('href', ''))
-            operation, q = catalog_link(href)
-            if operation == 'su_degree.p_list_courses':
+            if 'su_degree.p_list_courses' in urlsplit(href).path.lower():
+                q = parse_qs(urlsplit(href).query)
                 if q.get('P_PROGRAM', [''])[0] != program or q.get('P_TERM', [''])[0] != term:
                     raise CatalogError('Elective link points to another major or admission term.')
                 if sid in pools and pools[sid] != href:
@@ -360,12 +307,7 @@ def parse_degree(html: str, program: str, term: str, source: str) -> dict:
     sections = []
     for cat in main:
         parts = [s for s in specs if s['category'] == cat]
-        if not parts:
-            sections.append(dict(id=cat, category=cat, label=LABELS[cat], courses=[],
-                rule='This category is not listed in this degree requirement summary.',
-                source=source, complete=True, dataStatus='not-applicable',
-                minimum=dict(credits=0), notApplicable=True))
-        elif len(parts) == 1:
+        if len(parts) == 1:
             sections.append(parts[0])
         else:
             merged = {c['code']: c for part in parts for c in part['courses']}

@@ -1,70 +1,55 @@
-# Verification reports
+# Version 2 test report
 
-For 2.2.1 use [TESTING-2.2.1.md](TESTING-2.2.1.md).
+Observation date: 17 September 2026. These results describe executed tests, not a guarantee of live catalog accuracy or every deployment environment.
 
-The report below describes the earlier 2.2.0 build, not the current test run.
+| Executed check | Result |
+| --- | --- |
+| Python unit/integration tests | 58 passed |
+| Node pure-model tests | 24 passed |
+| Chromium browser assertions | 41 passed |
+| Loopback HTTP requests | Six tested asset/API routes returned 200 with CSP headers; health also responded |
+| JavaScript and Python syntax | Passed |
+| Desktop and 390 × 844 mobile screenshots | Rendered and visually reviewed |
 
----
+## The camera regression
 
-# PREREQ 2.2 local repair: verification report
+The browser harness sampled the actual viewport transform and clicked course-node transform over animation frames. For both opening and closing a branch, the viewport translation and scale stayed identical. The clicked course's world position also stayed identical. This was repeated after manual panning and zooming.
 
-## Result
+Entering nodes had intermediate positions and opacities before settling. Exiting nodes remained during the animation and were then removed. A series of rapid toggles settled without duplicate DOM IDs or recentering. An elective pool expanded with the same camera invariant; keyboard collapse did too. Explicit section navigation and Reset moved the camera only when requested.
 
-| Check | Result | Scope |
-|---|---:|---|
-| Python regression, parser, service and transport tests | 160 passed | Real saved BIO degree HTML plus explicitly synthetic Banner fixtures and mocked transport |
-| JavaScript model tests | 30 passed | Actual graph model, missing-data behavior, local-plan validation and metadata priority |
-| Chromium interface checks | 48 passed | Actual HTML/CSS/JS; all sections closed; camera coordinates and animated frames measured; mobile and reduced-motion checks |
-| Chromium-to-application integration checks | 16 passed | Browser test binding to actual WSGI app/service/parsers; synthetic university responses; simulated persisted browser storage |
-| Loopback HTTP checks | 11 passed | Actual local HTTP socket and WSGI app; offline source service; Host/Origin/CSP checks |
-| Direct live university source check | NOT PASSED | DNS lookup failed before a catalog response was received |
+A controlled mocked index response added a previously unknown course relationship while the viewport stayed fixed. This exercises the production frontend's index-response path, not the real university network.
 
-These are not 265 live university tests. The Python suite and browser harness deliberately distinguish the supplied real degree HTML from synthetic catalog/schedule examples. Counts describe local checks only. The integration harness does not prove the real Banner HTML matches every tested template.
+## Other tested behavior
 
-## Specific repairs tested
+Python covers strict codes/terms, program/cohort identity, discovered pool links, atomic refresh and unchanged dates on failure, no cross-major fallback, cache priority, index single-flight, stop-after-three-failures behavior, current-detail storage and offline no-network behavior. Parsing covers mixed AND/OR, grades, explicit none versus unknown, singular and zero-credit headings, description-only contextual requirements, split-core sections, additional requirements and HTML limits.
 
-The exact captured Fall 2026 POST encodes to 1,267 bytes with 94 ordered fields and 74 subjects. Repeated subject/dummy fields and blank filters are preserved. Term controls named `cat_term_in`, `term_in` or `p_term` are read from the actual form. Runtime subjects are discovered from the selected term, not blindly reused from the capture.
+Targeted security tests cover the approved upstream URL/parameter allowlist, credential/port/host restrictions, private DNS addresses, robots failure/denial, required same-origin API header, Host/Origin checks, traversal/duplicate-query rejection, static file exposure and response headers. These are not a penetration test.
 
-The transport passes a 45-second timeout, accepts a 4.1 MB test response, rejects over-16-MB responses, closes connections, bounds cookies, validates redirects, and stops on actual 401/403/429/503 and recognized sign-in/challenge pages. Public-query mode and optional robots-exclusion mode have separate tests.
+Model tests cover forward direction, no category-to-course prerequisite edges, no number-range folders, University-first ordering, real HUM/MATH choices, course-occurrence IDs, cycle guards, status/search structure retention, subject-dot classification, incoming ALL/OR preservation, absence of corequisite unlock edges, partial coverage and plan validation.
 
-Degree parsing recognizes the exact two-question-mark wrapper links from the supplied BIO HTML. Its 11 required courses and embedded University choices are parsed; unavailable elective pools stay unknown. Synthetic fixtures exercise each of the 12 program identifiers and preserve the selected major/admission identity. This does not establish 12 successfully retrieved live datasets.
+Chromium also checks white text/black background, subject dots, initial University/Required visibility, forward search focus, full prerequisite and corequisite details, source coverage, marking, completed filters, JSON export/import, wrong-cohort rejection, unknown requirements, returning from an unavailable major, mobile Map default, touch-pointer panning, mobile detail layout, reduced motion and literal rendering of malicious-looking source strings.
 
-Course-rule records are keyed by catalog term and course; schedule records by teaching term and course. Unversioned records are not silently substituted into a selected catalog term. Wrong course/term responses and unknown requirement syntax fail closed. Catalog presence is not used as evidence of offering status.
+The exact browser assertion names are in `browser-checks.json`.
 
-The interface preserves its monochrome design, subject-colored dots, collapsed startup and 320 ms transitions. Browser checks sample camera coordinates across expansion/collapse and background data updates. Actual current-catalog metadata takes precedence over a degree-pool display title. Partial data does not silently erase local markers.
+## Harness limits
 
-## Live attempt
+The browser uses `page.set_content` with the actual standalone HTML. A Map-backed localStorage substitute is injected for the about:blank origin. Therefore these assertions verify UI behavior and storage logic, not native browser disk persistence.
 
-`docs/live-source-check.json` contains the actual result:
+A local offline Python server was started, and real loopback requests checked `/`, `/app.js`, `/model.js`, `/styles.css`, `/api/index?program=BSEE&term=202401`, `/api/course?code=EE%20202` and `/health`. Chromium navigation to that loopback URL was attempted but blocked by the environment with `ERR_BLOCKED_BY_ADMINISTRATOR`. Production CSP enforcement through full browser navigation is not claimed.
 
-```text
-DNS lookup failed for suis.sabanciuniv.edu. No catalog response was received.
-```
+Direct university fetching failed at DNS resolution in this environment. The research browser could read the official pages used for the factual snapshot. Parser fixtures are explicitly reconstructed HTML, not archived upstream responses. End-to-end live indexing for the 12 configured majors remains unverified.
 
-The checker stopped after the network failure rather than retrying every source. Degree, prerequisite-detail and schedule checks were marked skipped, not passed. Changing a timeout cannot repair this environment's failed DNS resolution. The live result is not disguised by unit-test success.
-
-## Browser-environment restriction
-
-The installed Chromium blocks direct navigation to loopback URLs. The test harness does not modify or work around that administrative policy. It renders the app in an isolated test page and explicitly calls the local WSGI application through a test binding. A separate Python HTTP smoke test exercises loopback sockets. Browser localStorage persistence is simulated; no claim of real disk-persistence testing is made.
-
-## What was not verified
-
-No production Gunicorn launch, Render deployment, Cloudflare deployment, current live dataset for all majors, fully parsed real Banner POST result, university-approved unattended crawling arrangement, or independent security audit has been completed by these local checks. No GitHub or other account was accessed or modified during this repair.
+Not executed: full live catalog crawl, cloud/GitHub deployment, Docker production build, physical-device testing, Safari/Firefox, macOS/Windows launcher execution, external security/accessibility audit or public traffic load testing.
 
 ## Reproduce
 
 ```sh
 python3 -m unittest discover -s tests -v
 node --test tests/model.test.cjs
-python3 scripts/http_smoke.py
-python3 scripts/browser_smoke.py --chromium /path/to/chromium
-python3 scripts/integration_smoke.py --chromium /path/to/chromium
+python3 scripts/build_seed.py
+python3 scripts/build_preview.py
+python3 scripts/browser_smoke.py --chromium /path/to/chromium --screenshots docs
+python3 scripts/check_live.py --program BSEE --term 202401
 ```
 
-The optional read-only source checker uses the production adapters and a temporary cache:
-
-```sh
-python3 scripts/check_live.py --program BSBIO --term 202401 --catalog-term 202601 --course "BIO 303"
-```
-
-It neither deploys nor changes an account. A nonzero exit and `allVerified: false` must not be presented as success.
+The browser command needs the optional Playwright package. The final command is a real source check and should fail visibly if the official server is unavailable or access is blocked.

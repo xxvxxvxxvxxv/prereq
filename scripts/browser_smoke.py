@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Real Chromium tests of the offline build. No upstream network access.
-The about:blank harness simulates storage, including a second load with saved values.
+The about:blank harness simulates localStorage, not browser disk persistence.
 Animation checks sample actual DOM position, opacity and viewport transforms.
 """
 from __future__ import annotations
@@ -29,11 +29,6 @@ def shot(page,name):
 def camera(page):return page.locator('#viewport').get_attribute('transform')
 def choose(page):
     page.set_content(html,wait_until='load');page.locator('#open-map').click();page.wait_for_timeout(450)
-def expand(page,*ids):
-    for id in ids:
-        page.locator(f'[data-node="{id}"]').dispatch_event('click');page.wait_for_timeout(380)
-def all_closed(page):
-    return page.locator('[data-node]').count()==5 and page.locator('[data-node][aria-expanded="false"]').count()==5
 def find(page,code):
     page.locator('#search').fill(code);page.locator('#search-results button').first.click();page.wait_for_timeout(450)
 def detail(page,code):
@@ -61,18 +56,11 @@ with sync_playwright() as p:
     shot(page,'chooser');page.locator('#open-map').click();page.wait_for_timeout(450)
     check('No marketing headline or tinted background',not page.locator('.map-heading').count() and page.evaluate("getComputedStyle(document.body).backgroundColor==='rgb(0, 0, 0)'"))
     check('All graph text is white',page.locator('#viewport text').evaluate_all("xs=>xs.every(x=>getComputedStyle(x).fill==='rgb(255, 255, 255)')"))
-    check('All five sections start closed with no course nodes or edges',all_closed(page) and page.locator('#viewport .edge').count()==0)
-    check('No course panel is opened automatically',not page.locator('#course-panel').is_visible())
+    check('Subject colors affect dots rather than labels',page.locator('.dot.subject-cs').first.evaluate("e=>getComputedStyle(e).fill==='rgb(255, 102, 102)'"))
+    check('University courses start open, major-required follows, electives start closed',page.locator('[data-node="section:university"]').get_attribute('aria-expanded')=='true' and page.locator('[data-node="section:required"]').get_attribute('aria-expanded')=='true' and page.locator('[data-node="section:area"]').get_attribute('aria-expanded')=='false')
+    check('Actual IF 100 to CS 201 to CS 204 path rendered',page.locator('[data-node="section:university/IF 100>CS 201>CS 204"]').count()==1)
     check('Partial coverage remains visible',page.locator('#match-count').inner_text()=='56/624 prerequisites checked')
     shot(page,'overview')
-    initial_camera=camera(page)
-    expand(page,'section:university')
-    check('Opening University leaves all its course branches and the other sections closed',page.locator('[data-node="section:required"]').get_attribute('aria-expanded')=='false' and page.locator('[data-node*="/"][aria-expanded="true"]').count()==0)
-    check('Opening the first section preserves the starting camera',camera(page)==initial_camera)
-    expand(page,'section:required','section:university/MATH 101','section:university/IF 100','section:university/IF 100>CS 201')
-    check('Subject colors affect dots rather than labels',page.locator('.dot.subject-cs').first.evaluate("e=>getComputedStyle(e).fill==='rgb(255, 102, 102)'"))
-    check('Actual IF 100 to CS 201 to CS 204 path rendered after explicit expansion',page.locator('[data-node="section:university/IF 100>CS 201>CS 204"]').count()==1)
-    shot(page,'expanded')
     parent='section:university/MATH 101';child=parent+'>MATH 102'
     closed=toggle_frames(page,parent,child)
     check('Collapse animates retained nodes before removal',closed['immediate']['present'] and any(f['present'] and 0<f['opacity']<1 for f in closed['frames']) and not closed['frames'][-1]['present'])
@@ -100,7 +88,7 @@ with sync_playwright() as p:
     before=camera(page);page.locator('[data-node="section:core"]').focus();page.keyboard.press('Enter');page.wait_for_timeout(400)
     check('Keyboard collapse preserves viewport',camera(page)==before and page.locator('[data-node="section:core"]').get_attribute('aria-expanded')=='false')
     page.locator('#reset-button').click();page.wait_for_timeout(400)
-    check('Explicit reset restores the initial viewport with every branch closed',camera(page)=='translate(45 128) scale(1)' and all_closed(page))
+    check('Explicit reset restores the initial readable viewport',camera(page)=='translate(45 128) scale(1)')
     find(page,'EE202')
     check('Search opens a forward course map instead of a category list',page.locator('[data-node="focus:EE 202>EE 303"]').count()==1 and page.locator('#direction-label').inner_text()=='Prerequisite → course')
     page.locator('[data-node="focus:EE 202>EE 303"]').dispatch_event('click');page.wait_for_timeout(400)
@@ -136,16 +124,16 @@ with sync_playwright() as p:
     page.locator('#close-course').click();detail(page,'ENS491')
     check('Contextual program/cohort conditions are visible','80 completed SU credits' in page.locator('#course-content').inner_text())
     page.locator('#close-course').click();page.locator('#source-button').click()
-    check('Sources distinguish unversioned examples and missing pools from live data','Unversioned examples are never silently used' in page.locator('#info-content').inner_text())
+    check('Sources show 57 bundled records, not fictitious complete coverage','57 bundled' in page.locator('#info-content').inner_text())
     page.locator('#close-info').click();page.locator('#change-major').click();page.locator('#major-select').select_option('BSCS');page.locator('#open-map').click()
     check('Unbundled major never receives substituted EE data','No offline snapshot' in page.locator('#empty-title').inner_text() and page.locator('[data-node]').count()==0)
     # Return to a snapshot after the empty state: keyed SVG maps must be rebuilt.
     page.locator('#change-major').click();page.locator('#major-select').select_option('BSEE');page.locator('#open-map').click();page.wait_for_timeout(450)
-    check('Switching back rebuilds the map with all five branches closed',all_closed(page) and page.locator('#graph-region').is_visible())
+    check('Switching back rebuilds a working map',page.locator('[data-node="section:university"]').count()==1)
     check('Desktop JavaScript produced no errors',not errors)
     mobile=browser.new_page(viewport={'width':390,'height':844},is_mobile=True,has_touch=True)
     choose(mobile)
-    check('Mobile starts in the prerequisite map with every branch closed',mobile.locator('#graph-region').is_visible() and not mobile.locator('#list-region').is_visible() and all_closed(mobile))
+    check('Mobile starts in the prerequisite map',mobile.locator('#graph-region').is_visible() and not mobile.locator('#list-region').is_visible())
     check('Mobile document does not overflow horizontally',mobile.evaluate('document.documentElement.scrollWidth<=window.innerWidth'))
     before=camera(mobile)
     mobile.locator('#graph').dispatch_event('pointerdown',{'pointerId':1,'pointerType':'touch','clientX':200,'clientY':500,'button':0})
@@ -156,9 +144,8 @@ with sync_playwright() as p:
     detail(mobile,'EE202')
     check('Mobile course panel stays within viewport',mobile.locator('#course-panel').is_visible() and mobile.locator('#course-panel').bounding_box()['width']<=390)
     reduced=browser.new_page(viewport={'width':1280,'height':900},reduced_motion='reduce');choose(reduced)
-    expand(reduced,'section:university')
     reduced.locator('[data-node="section:university/MATH 101"]').dispatch_event('click')
-    check('Reduced motion respects system preference',reduced.locator('#viewport').get_attribute('data-animating')=='false' and reduced.locator('[data-node="section:university/MATH 101>MATH 102"]').count()==1)
+    check('Reduced motion respects system preference',reduced.locator('#viewport').get_attribute('data-animating')=='false' and reduced.locator('[data-node="section:university/MATH 101>MATH 102"]').count()==0)
     attack=browser.new_page(viewport={'width':1280,'height':900})
     payload='<img src=x onerror="window.__injected=true">'
     evil=html.replace('Electronic Circuits II',payload.replace('"','\\"'))
@@ -167,38 +154,17 @@ with sync_playwright() as p:
     live=browser.new_page(viewport={'width':1440,'height':900})
     mock_script='''<script>window.fetch=async function(url){
       const seed=window.__MOCK_SEED__,ok=x=>new Response(JSON.stringify(x),{headers:{'Content-Type':'application/json'}}),path=String(url);
-      // Synthetic, scoped fixture data for camera testing, not a new source snapshot.
-      if(path==='seed.json')return ok({...seed,catalogDetails:{'202601':seed.details}});
-      if(path==='api/catalog-terms')return ok({data:{terms:seed.catalogTerms},meta:{refreshing:false}});
+      if(path==='seed.json')return ok(seed);
       if(path.startsWith('api/degree'))return ok({data:seed.degrees['BSEE:202401'],meta:{state:'snapshot',observedAt:seed.observedAt,refreshing:false}});
-      if(path.startsWith('api/index'))return new Promise(resolve=>{window.__pushIndex=()=>resolve(ok({data:{program:'BSEE',term:'202401',catalogTerm:'202601',details:{'ECON 201':{code:'ECON 201',catalogTerm:'202601',title:'Mock dependent course',prerequisite:{type:'course',code:'MATH 101',minGrade:'D'},corequisite:{type:'none'},observedAt:'2026-09-17',origin:'test'}}},meta:{refreshing:false}}));});
+      if(path.startsWith('api/index'))return new Promise(resolve=>{window.__pushIndex=()=>resolve(ok({data:{program:'BSEE',term:'202401',details:{'ECON 201':{code:'ECON 201',title:'Mock dependent course',prerequisite:{type:'course',code:'MATH 101',minGrade:'D'},corequisite:{type:'none'},observedAt:'2026-09-17',origin:'test'}}},meta:{refreshing:false}}));});
       throw new Error('Unexpected mock request '+path);
     };</script>'''
     live_html=html.replace('window.__PREVIEW_SEED__=','window.__MOCK_SEED__=').replace('<head>','<head>'+mock_script,1)
     live.set_content(live_html,wait_until='load');live.locator('#open-map').click();live.wait_for_timeout(450)
-    expand(live,'section:university','section:university/MATH 101')
     live.locator('#zoom-in').click();before=camera(live)
     frames=live.evaluate('''async ()=>{const frames=[];window.__pushIndex();const start=performance.now();await new Promise(resolve=>{function frame(t){frames.push(document.getElementById('viewport').getAttribute('transform'));if(t-start<450)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame);});return frames;}''')
     check('Background index results add edges without moving the viewport',all(f==before for f in frames) and live.locator('[data-node="section:university/MATH 101>ECON 201"]').count()==1)
-    # Simulate a second load with preserved storage values. This browser's
-    # administrator policy blocks file:// navigation, so do not claim a real
-    # disk-persistence test or weaken its policy to run one.
-    persisted=browser.new_page(viewport={'width':1440,'height':960})
-    choose(persisted)
-    expand(persisted,'section:university','section:university/IF 100')
-    detail(persisted,'CS204')
-    persisted.get_by_role('button',name='◇ Planned',exact=True).click()
-    saved_values=persisted.evaluate("Object.fromEntries(['prereq.selection.v1','prereq.plan.v1:BSEE:202401'].map(k=>[k,localStorage.getItem(k)]))")
-    saved_bootstrap=bootstrap.replace('const m=new Map();','const m=new Map('+json.dumps(list(saved_values.items()))+');')
-    persisted.set_content(html.replace(bootstrap,saved_bootstrap),wait_until='load');persisted.wait_for_timeout(450)
-    check('Restored-selection startup keeps every branch closed',all_closed(persisted) and not persisted.locator('#chooser').is_visible())
-    check('Restored-selection startup preserves markers and keeps the detail panel closed',persisted.locator('#plan-count').inner_text()=='1' and not persisted.locator('#course-panel').is_visible())
-    expand(persisted,'section:university')
-    persisted.locator('#list-tab').click();persisted.locator('#change-major').click();persisted.locator('#open-map').click();persisted.wait_for_timeout(450)
-    check('Reopening the degree from List returns to a fully collapsed map',all_closed(persisted) and persisted.locator('#graph-region').is_visible())
-    detail(persisted,'CS204');persisted.locator('#reset-button').click();persisted.wait_for_timeout(450)
-    check('Reset closes both branches and the course panel without clearing the plan',all_closed(persisted) and not persisted.locator('#course-panel').is_visible() and persisted.locator('#plan-count').inner_text()=='1')
     browser.close()
-print(f'\n{len(checks)} browser checks passed. Actual Chromium rendering; simulated saved storage; no real disk-persistence or live upstream validation.')
+print(f'\n{len(checks)} browser checks passed. Actual Chromium rendering; simulated localStorage; no live upstream validation.')
 if args.screenshots:
     (args.screenshots/'browser-checks.json').write_text(json.dumps(dict(passed=len(checks),checks=checks),indent=2)+'\n')

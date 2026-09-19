@@ -26,10 +26,9 @@ class IndexTests(unittest.TestCase):
     def test_no_degree_does_not_substitute_another_major(self):
         r=self.s.graph_index('BSCS','202401')
         self.assertIsNone(r['data']);self.assertFalse(r['meta']['refreshing'])
-    def test_required_then_university_are_indexed_before_electives(self):
+    def test_university_and_required_are_indexed_before_electives(self):
         d=self.s.fallback('degree:BSEE:202401');codes=self.s._index_codes(d)
-        self.assertEqual(len(codes),624);self.assertLess(codes.index('EE 202'),codes.index('IF 100'))
-        self.assertLess(codes.index('IF 100'),codes.index('EE 302'))
+        self.assertEqual(len(codes),624);self.assertLess(codes.index('IF 100'),codes.index('EE 202'))
         self.assertLess(codes.index('EE 202'),codes.index('EE 302'))
     def test_index_endpoint_requires_same_origin_header_and_valid_query(self):
         app=App(service=self.s)
@@ -44,23 +43,22 @@ class IndexTests(unittest.TestCase):
         self.s._index_codes=lambda d:['EE 202']
         def load(key):
             calls.append(key);gate.wait(2)
-            return dict(self.s.seed['details']['EE 202'],origin='live',catalogTerm='202601')
+            return dict(self.s.seed['details']['EE 202'],origin='live')
         self.s.load=load
         try:
-            self.s.store.put('catalog:202601',{'courses':{'EE 202':{}},'catalogTerm':'202601'})
-            for _ in range(12):self.s.graph_index('BSEE','202401','202601')
+            for _ in range(12):self.s.graph_index('BSEE','202401')
         finally:gate.set()
         self.s.index_executor.shutdown(wait=True)
-        self.assertEqual(calls,['course:202601:EE 202'])
+        self.assertEqual(calls,['course:EE 202'])
     def test_stops_after_three_consecutive_failures_and_preserves_date(self):
-        old=dict(self.s.seed['details']['EE 202'],origin='live',catalogTerm='202601',observedAt='2020-01-01')
-        self.s.store.put('course:202601:EE 202',old)
-        with self.s.store.connect() as db:db.execute('UPDATE snapshots SET saved=? WHERE key=?',(time.time()-TTL-1,'course:202601:EE 202'))
-        _,saved=self.s.store.get('course:202601:EE 202');calls=[]
+        old=dict(self.s.seed['details']['EE 202'],origin='live',observedAt='2020-01-01')
+        self.s.store.put('course:EE 202',old)
+        with self.s.store.connect() as db:db.execute('UPDATE snapshots SET saved=? WHERE key=?',(time.time()-TTL-1,'course:EE 202'))
+        _,saved=self.s.store.get('course:EE 202');calls=[]
         def fail(key):calls.append(key);raise CatalogError('Test unavailable')
         self.s.load=fail;key='degree:BSEE:202401';self.s.index_jobs[key]=dict(running=True,attempted=0)
-        self.s._build_index(key,['EE 202','EE 200','CS 303','MATH 101'],'202601')
-        self.assertEqual(len(calls),3);self.assertEqual(self.s.store.get('course:202601:EE 202'),(old,saved))
+        self.s._build_index(key,['EE 202','EE 200','CS 303','MATH 101'])
+        self.assertEqual(len(calls),3);self.assertEqual(self.s.store.get('course:EE 202'),(old,saved))
         self.assertFalse(self.s.index_jobs[key]['running'])
     def test_fresh_cache_does_not_trigger_an_index(self):
         self.s.client.offline=False;self.s._index_codes=lambda d:['EE 202']

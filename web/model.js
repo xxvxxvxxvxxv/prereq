@@ -72,7 +72,7 @@
     }
     function visit(cid, id, depth, parent, ancestry, extra = {}) {
       if (rows.length >= MAX_NODES) { capped=true; return; }
-      const c = {...(courses[cid]||{code:cid,title:'Outside this degree pool'}),...(details[cid]||{})};
+      const c = courses[cid] || details[cid] || {code:cid,title:'Outside this degree pool'};
       const children = index[cid] || [], cycle = ancestry.has(cid), limited = depth >= MAX_DEPTH;
       const n = add({id,label:cid,kind:'course',course:c,x:depth*COLUMN,y:cursor,width:250,depth,
         subtitle:c.title,count:children.length,expandable:children.length>0&&!cycle&&!limited,
@@ -100,7 +100,7 @@
         const title = {university:'University courses',required:'Major required',core:'Core electives',area:'Area electives',free:'Free electives'}[section.id] || section.label;
         const sid=`section:${section.id}`, open=expanded.has(sid);
         const h=add({id:sid,label:title,kind:'section',x:0,y:cursor,width:250,section:section.id,
-          count:section.complete===false?'?':section.courses.length,open,expandable:section.courses.length>0,rule:section.rule,subtitle:section.complete===false?'Course pool not loaded':undefined});
+          count:section.courses.length,open,expandable:section.courses.length>0,rule:section.rule});
         groups.push(h); cursor+=open?48:62;
         if (!open) continue;
         const choices=choicesFor(degree,section), choiceCodes=new Set(choices.flatMap(c=>c.codes||c.options?.flat()||[]));
@@ -136,7 +136,7 @@
       return node(path,ast.type === 'and'?'ALL of':'ANY of','logic',(ast.children||[]).map((a,i)=>expression(a,depth,seen,`${path}/${i}`)).filter(Boolean));
     }
     function visit(value,depth,seen,path,grade) {
-      const d=details[value],c={...(courses[value]||{code:value,title:'Outside this degree pool'}),...(d||{})};
+      const d=details[value],c=courses[value]||d||{code:value,title:'Outside this degree pool'};
       const n=node(path,value,'course',[],{course:c,subtitle:c.title,minGrade:grade,subjectClass:subjectClass(value)});
       if(seen.has(value)){n.children=[node(path+'/cycle','Cycle in source','notice')];return n;}
       if(depth>=12){n.children=[node(path+'/limit','Depth limit','notice')];return n;}
@@ -157,12 +157,12 @@
     walk(rootNode,0,null);
     return {nodes,edges,groups:[],width:Math.max(...nodes.map(n=>n.x+n.width)),height:cursor+30};
   }
-  function validatePlan(value,degree,options={}) {
+  function validatePlan(value,degree) {
     if(!value||value.schemaVersion!==1||value.program!==degree.program.id||value.term!==degree.term||!value.marks||typeof value.marks!=='object'||Array.isArray(value.marks))throw new Error('Choose a version-1 plan for this exact major and admission term.');
     const knownCourses=uniqueCourses(degree),entries=Object.entries(value.marks);
     if(entries.length>1500)throw new Error('Plan is too large.');
     const result=Object.create(null);
-    for(const [cid,status] of entries){if((!Object.hasOwn(knownCourses,cid)&&!options.keepUnlisted)||!/^([A-Z]{2,8}) ([0-9]{3,5}[A-Z]{0,2})$/.test(cid)||!['planned','completed'].includes(status))throw new Error('Plan contains an unknown course or status. Nothing was imported.');result[cid]=status;}
+    for(const [cid,status] of entries){if(!Object.hasOwn(knownCourses,cid)||!['planned','completed'].includes(status))throw new Error('Plan contains an unknown course or status. Nothing was imported.');result[cid]=status;}
     return result;
   }
   const api={normal,uniqueCourses,subjectClass,leaves,known,expressionLabel,ruleBadge,reverseIndex,coverage,sections,forwardForest,dependencyTree,layout,validatePlan};

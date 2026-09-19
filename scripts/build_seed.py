@@ -74,13 +74,5 @@ for record in facts['records']:
         d['prerequisite']=dict(type='unknown',reason=record['unknownReason'])
     details[cid]=d
 seed=dict(schemaVersion=1,programs=list(PROGRAM_MAP.values()),degrees={'BSEE:202401':degree},details=details,observedAt=stamp)
-bio_path=ROOT/'data'/'bio-202401-degree.json'
-if bio_path.exists():
-    seed['degrees']['BSBIO:202401']=json.loads(bio_path.read_text(encoding='utf-8'))
-seed['catalogTerms']=[{'id':'202601','label':'Fall 2026–2027','source':'User-supplied Banner selector and POST screenshots'}]
-seed['catalogDetails']={}
-seed['legacyDetailScope']='Unversioned source examples; never prerequisites for a selected catalog term.'
-for detail in seed['details'].values():
-    detail.update(catalogTerm=None,sourceRole='unversioned-reference')
 (ROOT/'web'/'seed.json').write_text(json.dumps(seed,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
 print('Seed:',sum(len(s['courses']) for s in sections),'courses,',len(details),'detail records')

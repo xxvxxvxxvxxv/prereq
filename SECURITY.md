@@ -1,29 +1,33 @@
-# Security and access behavior
+# Security and privacy
 
-This repair only changes the local PREREQ project. It has no GitHub API client, deployment action, university login flow, transcript upload, analytics, or user-cookie import. No operation modifies enrollment, grades or institutional records.
+This is a public-catalog reader and local planning UI, not a SUIS login client. It never requests a university username, password, transcript or token. It does not submit CRNs, request seats, bypass permission checks or register courses.
 
-## Upstream access
+## Implemented controls
 
-Only HTTPS on `suis.sabanciuniv.edu`, `www.sabanciuniv.edu`, and `sabanciuniv.edu` is allowed. Routes are exact public catalog/degree/schedule endpoints, not arbitrary URLs. Form keys are allowlisted, values bounded, and duplicate fields are permitted only for known Banner array controls. POST is limited to public search forms.
+The upstream fetcher has one fixed HTTPS host and an explicit list of public paths and parameter names. It validates every redirect, rejects credentials and custom ports, checks DNS addresses against non-public ranges, pins the connection to the resolved public address, and retains TLS certificate/hostname verification. The public API accepts major, term or course code, never a user-provided destination URL.
 
-DNS is resolved before connecting. Non-global/private IPs are rejected, and TLS verifies the original hostname. Redirects are revalidated. Login URLs and cross-host POST redirects are rejected. The client does not disable certificate verification, use proxies or copy browser credentials.
+Upstream traffic is serialized, normally at most one request per second. The reader respects robots directives, requests identity encoding, limits responses to 2 MB and structural HTML depth/node counts, bounds connect/read work, obeys rate-limit cooldowns, and does not retry around authentication or access restrictions. If robots cannot be checked, live reads pause.
 
-HTTP 401, 403, 429 and 503 trigger a pause. Password, CAPTCHA and recognized challenge responses are not parsed as catalog data. No challenge solving, user-agent masquerading or sign-in attempts are made. Anonymous cookies obtained from these public responses are held in a bounded, per-client in-memory jar; user-supplied cookies are not accepted.
+Degree replacement is atomic after successful parsing of all referenced pools. Major/admission identity, summary totals, categories, course fields and elective links are checked. Unexpected pool shrinkage over 25% retains the previous snapshot for review. Rules that cannot be understood remain source text or explicit unknown conditions. None of these checks guarantees perfect extraction from arbitrary future HTML changes.
 
-The default `public-queries` fetch mode does not use robots.txt as an HTTP authorization check. It must not be represented as robots-compliant crawling or university-granted permission. The SUIS robots file excludes crawling. `PREREQ_FETCH_POLICY=robots` retains strict exclusion behavior for operators who select it. Actual access restrictions are respected in both modes. Review source terms and obtain an appropriate access arrangement before operating an unattended public collector.
+The local server binds to loopback. The WSGI application restricts Host values, serves only an explicit static-file map, and uses a restrictive Content Security Policy, no-sniff, no-referrer and anti-framing headers. Browser API calls require a custom header, cross-site requests are refused, no cross-origin API access is enabled, and refresh is POST-only with an Origin check. Rate tracking, refresh jobs, cache entries, field lengths, plan imports and JSON bodies are bounded. A single prerequisite-index job runs at a time, uses at most 1,500 target codes, stops after three consecutive source failures or 20 minutes, and uses the same paced client as on-demand reads. These are abuse-reduction controls, not authentication for the public catalog.
 
-## Resource bounds
+All remote strings are rendered through text nodes, never remote HTML insertion. Imported plans must match the exact selected major/term and contain only known course codes with allowed status values. No file is executed during import.
 
-At least 1.5 seconds between serialized source requests; default 45-second socket timeout; bounded response reading and 16 MB body cap; 32 KB encoded form cap. No unbounded decompression. Background indexing stops after three consecutive errors or its time budget. Cache and in-memory job/lock state are bounded. Responses do not execute upstream JavaScript.
+## Data and logs
 
-## Data integrity
+Planned/Completed marks and last selection are stored in browser localStorage. Plan JSON export is user-initiated. No analytics or external frontend resources are loaded. Browser storage is not encrypted and is not an authenticated vault; anyone using the same browser profile can see its plan.
 
-Catalog term, admission term and schedule term are separate. Missing fields stay unknown. A malformed or mismatched course/term response is rejected. Atomic SQLite snapshot writes preserve previous data after failure. A complete degree snapshot is not replaced with missing elective pools. Term-specific prerequisite keys never fall back to unversioned examples. Cached observation times are not advanced on failures.
+The server necessarily sees requested course codes, requested degree keys and connection metadata. The local launcher does not persist access logs. Production servers/proxies may log IPs, paths and queries: disable query logging or set a short, disclosed retention policy. Avoid publishing user plans or `.cache` contents. Cache records contain public catalog data, not grades or credentials, but filenames/keys can reveal which courses were requested.
 
-## Browser/API
+## Before a public deployment
 
-CSP restricts scripts and network access to the app origin. Source strings are inserted with textContent, not HTML. External links are limited to known official hosts. API calls require the same-origin client header, reject cross-site fetches, enforce query bounds and rate limits, and never offer a generic URL fetch endpoint. Refresh requires POST and validates Origin when present. Deployment hosts are explicitly allowlisted. Private files and cache paths are not served.
+Use an HTTPS reverse proxy and the production WSGI server, not `start.py`. Set an exact `PREREQ_HOSTS` allowlist. Trust forwarded protocol headers only from the real proxy; do not trust arbitrary client `X-Forwarded-*` values. The in-process rate limit uses REMOTE_ADDR, so users behind a proxy can share a limit unless the trusted server topology supplies the real address safely. Add per-client limits and request-size/time limits at the edge.
 
-Local plans are keyed by program and admission term and are never sent to source sites. Import/export is bounded and validates shape, course syntax and status. An incomplete source refresh does not delete local markers.
+Keep one Gunicorn worker process for this version, because the upstream pacing lock and refresh queue are process-local. Eight worker threads serve cached requests while the separate small refresh pool handles catalog work. Scaling to multiple processes/replicas requires shared scheduling, distributed rate limits and a reviewed cache coordination design.
 
-Tests exercise these controls but are not an independent security audit. Live source behavior and production hosting were not verified by the local build checks.
+Use a persistent writable cache volume; keep the application code read-only. Update Python, the pinned production dependency, the base image and development dependencies after testing. No Docker image, penetration test, external security audit or cloud deployment was executed in the build environment. Pin a reviewed image digest for a production release.
+
+## Reporting a problem
+
+For parser failures, report the public source URL, selected major/admission term and observed error. Do not include credentials, a transcript, private student information or an unredacted plan. Handle exploitable vulnerabilities privately with the repository maintainer before public disclosure. No response-time or security warranty is made.

@@ -1,1 +1,2 @@
-__version__ = "2.2.1"
+"""Prereq: source-backed, local-first Sabancı curriculum explorer."""
+__version__ = '2.0.0'

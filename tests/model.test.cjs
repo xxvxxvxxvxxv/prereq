@@ -32,33 +32,3 @@ test('secondary upstream view preserves full mixed AND/OR tree',()=>{const nodes
 test('valid plans remain major- and admission-term-specific',()=>{const good={schemaVersion:1,program:'BSEE',term:'202401',marks:{'EE 202':'planned'}};assert.equal(M.validatePlan(good,degree)['EE 202'],'planned');assert.throws(()=>M.validatePlan({...good,term:'202601'},degree));assert.throws(()=>M.validatePlan({...good,program:'BSCS'},degree));});
 test('plans reject unknown courses, arbitrary statuses and prototype keys',()=>{for(const marks of [{'EE 999':'completed'},{'EE 202':'eligible'},JSON.parse('{"__proto__":"planned"}')])assert.throws(()=>M.validatePlan({schemaVersion:1,program:'BSEE',term:'202401',marks},degree));});
 test('catalog text stays model data, never evaluated markup',()=>{const n=M.normal('<img src=x onerror=alert(1)>');assert.equal(typeof n,'string');assert.ok(n.includes('onerror'));});
-
-
-test('empty expanded set renders only five closed sections and no course edges',()=>{
-  const g=forest(new Set());
-  assert.deepEqual(g.nodes.map(n=>n.id),['section:university','section:required','section:core','section:area','section:free']);
-  assert.ok(g.nodes.every(n=>n.kind==='section' && n.open===false));
-  assert.equal(g.edges.length,0);
-});
-test('opening a section does not automatically expand any course or another section',()=>{
-  const g=forest(new Set(['section:university']));
-  assert.equal(g.nodes.find(n=>n.id==='section:required').open,false);
-  assert.ok(g.nodes.filter(n=>n.kind==='course').every(n=>!n.open));
-  assert.equal(g.edges.length,0);
-});
-test('unknown elective pools display question marks rather than verified zero',()=>{
-  const bio=seed.degrees['BSBIO:202401'];const g=M.forwardForest(bio,{},new Set());
-  assert.equal(g.nodes.find(n=>n.id==='section:core').count,'?');assert.equal(g.nodes.find(n=>n.id==='section:required').count,11);
-});
-test('saved local markers survive an incomplete degree refresh',()=>{
-  const bio=seed.degrees['BSBIO:202401'],value={schemaVersion:1,program:'BSBIO',term:'202401',marks:{'BIO 421':'planned'}};
-  assert.equal(M.validatePlan(value,bio,{keepUnlisted:true})['BIO 421'],'planned');
-  assert.throws(()=>M.validatePlan(value,bio));
-});
-test('keeping local markers does not accept malformed or prototype keys',()=>{
-  for(const cid of ['__proto__','../../x','CS204'])assert.throws(()=>M.validatePlan({schemaVersion:1,program:'BSEE',term:'202401',marks:{[cid]:'planned'}},degree,{keepUnlisted:true}));
-});
-test('current catalog metadata takes precedence over degree pool display title',()=>{
-  const d={'EE 202':{...details['EE 202'],title:'Catalog title fixture'}};
-  const g=M.forwardForest(degree,d,new Set(['section:required']));assert.equal(g.nodes.find(n=>n.label==='EE 202').subtitle,'Catalog title fixture');
-});

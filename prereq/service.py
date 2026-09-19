@@ -14,8 +14,6 @@ from pathlib import Path
 from .catalog import (CatalogError, PROGRAM_MAP, code, degree_url, course_url,
                       parse_terms, parse_degree, parse_pool, parse_course)
 from .network import OfficialClient, validate_url
-from .banner import BannerAdapter, parse_detail
-from urllib.parse import urlencode
 
 LOG = logging.getLogger('prereq')
 TTL = 12*3600
@@ -49,313 +47,202 @@ class Store:
         with self.connect() as db:
             db.execute('INSERT INTO snapshots VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET payload=excluded.payload,saved=excluded.saved',(key,body,time.time()))
             # Bound persistent storage. Active degree snapshots are retained longer than course detail entries.
-            db.execute("DELETE FROM snapshots WHERE key IN (SELECT key FROM snapshots WHERE key LIKE 'course:%' ORDER BY saved DESC LIMIT -1 OFFSET 18000)")
+            db.execute("DELETE FROM snapshots WHERE key IN (SELECT key FROM snapshots WHERE key LIKE 'course:%' ORDER BY saved DESC LIMIT -1 OFFSET 3000)")
             db.execute("DELETE FROM snapshots WHERE key IN (SELECT key FROM snapshots WHERE key LIKE 'degree:%' ORDER BY saved DESC LIMIT -1 OFFSET 96)")
     def close(self):
         pass  # Connections are per operation, not shared across threads.
 
 class CatalogService:
-    """Three independent datasets: cohort rules, term catalog, term schedule."""
     def __init__(self, root: Path, cache_path: Path, offline=False, client=None):
-        self.root = Path(root)
-        self.seed = json.loads((self.root/'web'/'seed.json').read_text(encoding='utf-8'))
-        self.store = Store(cache_path)
-        self.client = client or OfficialClient(offline)
-        self.executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix='catalog')
-        self.index_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='prerequisite-index')
-        self.index_jobs = {}
-        self.lock = threading.RLock()
-        self.jobs = {}
-        self.closed = False
-        self._load_locks = [threading.RLock() for _ in range(64)]
-
-    def fallback(self, key):
-        kind, rest = key.split(':', 1)
-        if kind == 'degree':
+        self.root=root
+        self.seed=json.loads((root/'web'/'seed.json').read_text(encoding='utf-8'))
+        self.store=Store(cache_path)
+        self.client=client or OfficialClient(offline)
+        self.executor=ThreadPoolExecutor(max_workers=2,thread_name_prefix='catalog')
+        self.index_executor=ThreadPoolExecutor(max_workers=1,thread_name_prefix='prerequisite-index')
+        self.index_jobs={}
+        self.lock=threading.Lock()
+        self.jobs={}
+        self.closed=False
+    def fallback(self,key):
+        kind,rest=key.split(':',1)
+        if kind=='degree':
             return self.seed['degrees'].get(rest)
-        if kind == 'course':
-            if ':' in rest:
-                term, cid = rest.split(':', 1)
-                return self.seed.get('catalogDetails', {}).get(term, {}).get(cid)
-            return self.seed.get('details', {}).get(rest)
-        if kind == 'terms':
-            terms = [dict(id=d['term'], label=d['termLabel']) for d in self.seed['degrees'].values()
-                     if d['program']['id'] == rest]
-            return dict(program=rest, terms=terms, origin='bundled', observedAt=self.seed.get('observedAt')) if terms else None
-        if kind == 'catalogterms':
-            options = self.seed.get('catalogTerms', [])
-            return dict(terms=options, origin='bundled', observedAt=self.seed.get('observedAt')) if options else None
+        if kind=='course':
+            return self.seed['details'].get(rest)
+        if kind=='terms' and rest=='BSEE':
+            return dict(program='BSEE',terms=[dict(id='202401',label='Fall 2024–2025')],origin='bundled',observedAt=self.seed['observedAt'])
         return None
-
-    def get(self, key, refresh=False):
-        data, saved = self.store.get(key)
+    def get(self,key,refresh=False):
+        data,saved=self.store.get(key)
         if data is None:
-            data = self.fallback(key)
-        stale = not saved or time.time() - saved > TTL
-        # Unversioned bundled examples are viewable, but are never promoted to
-        # current, term-specific rules. The new UI always specifies catalogTerm.
-        legacy = key.startswith('course:') and key.count(':') == 1
-        if (stale or refresh) and not legacy and not getattr(self.client, 'offline', False):
-            self.schedule(key, refresh)
+            data=self.fallback(key)
+        stale=not saved or time.time()-saved>TTL
+        if stale or refresh:
+            self.schedule(key,refresh)
         with self.lock:
-            job = copy.copy(self.jobs.get(key, {}))
-        origin = data.get('origin', 'cache') if data else None
-        state = ('unavailable' if data is None else 'partial' if data.get('complete') is False
-                 else 'snapshot' if origin in {'bundled', 'user-supplied-html'}
-                 else 'stale' if stale else 'verified')
-        return dict(data=data, meta=dict(state=state, refreshing=job.get('running', False),
-            observedAt=data.get('observedAt') if data else None, lastAttempt=job.get('at'),
-            error=job.get('error') or ('Offline mode: source checks are disabled.' if getattr(self.client, 'offline', False) else None), ttlSeconds=TTL, sourceRole=data.get('sourceRole') if data else key.split(':')[0],
-            source='official public sources', offline=getattr(self.client, 'offline', False),
-            catalogTerm=data.get('catalogTerm') if data else None,
-            complete=data.get('complete') if data else False))
-
-    def schedule(self, key, force=False):
+            job=copy.copy(self.jobs.get(key,{}))
+        origin=data.get('origin','cache') if data else None
+        return dict(data=data,meta=dict(
+            state='unavailable' if data is None else 'snapshot' if origin=='bundled' else 'stale' if stale else 'verified',
+            refreshing=job.get('running',False), observedAt=data.get('observedAt') if data else None,
+            lastAttempt=job.get('at'), error=job.get('error'), ttlSeconds=TTL,
+            source='official public catalog', offline=getattr(self.client,'offline',False)))
+    def schedule(self,key,force=False):
         with self.lock:
-            old = self.jobs.get(key, {})
-            cooldown = 300 if old.get('error') else 60
-            if self.closed or old.get('running') or time.time()-old.get('started', 0) < cooldown:
+            old=self.jobs.get(key,{})
+            cooldown=300 if old.get('error') else 60
+            if self.closed or old.get('running') or time.time()-old.get('started',0)<cooldown:
                 return
-            if sum(bool(j.get('running')) for j in self.jobs.values()) >= 12:
-                self.jobs[key] = dict(running=False, error='Source queue is busy. Try again shortly.', started=time.time(), at=now_iso())
+            if sum(bool(j.get('running')) for j in self.jobs.values())>=12:
+                self.jobs[key]=dict(running=False,error='Refresh queue is busy. Try again in a minute.',started=time.time(),at=now_iso())
                 return
-            if len(self.jobs) > 1500:
-                self.jobs = {k:v for k,v in self.jobs.items() if v.get('running') or time.time()-v.get('started', 0) < 300}
-            self.jobs[key] = dict(running=True, started=time.time(), at=now_iso(), error=None)
-            self.executor.submit(self._refresh, key)
-
-    def _refresh(self, key):
-        error = None
+            if len(self.jobs)>1500:
+                self.jobs={k:v for k,v in self.jobs.items() if v.get('running') or time.time()-v.get('started',0)<300}
+            self.jobs[key]=dict(running=True,started=time.time(),at=now_iso(),error=None)
+            self.executor.submit(self._refresh,key)
+    def _refresh(self,key):
+        error=None
         try:
-            self.store.put(key, self.load(key))
+            data=self.load(key)
+            self.store.put(key,data)
         except Exception as exc:
-            error = str(exc) if isinstance(exc, CatalogError) else 'Could not reach or parse the official source. Previous data was kept.'
-            LOG.warning('Source check failed for %s: %s', key, error)
+            if isinstance(exc,CatalogError):
+                error=str(exc)
+            else:
+                error='Could not reach or read the official catalog. The previous snapshot has been kept.'
+            LOG.warning('Refresh failed (%s): %s',key,type(exc).__name__)
         finally:
             with self.lock:
-                if key in self.jobs:
-                    self.jobs[key].update(running=False, error=error)
-
-    def load(self, key):
-        # Coalesce parallel requests for shared semester snapshots/course pages.
-        # Fixed-size lock striping bounds memory even for arbitrary valid codes.
-        guard = self._load_locks[int(hashlib.sha256(key.encode()).hexdigest()[:8], 16) % 64]
-        with guard:
-            if key.startswith('course:') and key.count(':') == 2:
-                cached, stamp = self.store.get(key)
-                _, term, cid = key.split(':', 2)
-                if (cached and cached.get('catalogTerm') == term and cached.get('code') == cid
-                        and time.time()-stamp < TTL):
-                    return cached
-            value = self._load(key)
-            if key.startswith('course:') and key.count(':') == 2:
-                # Store under the single-course lock so a concurrent index and
-                # clicked course share one successful source response.
-                self.store.put(key, value)
-            return value
-
-    def _load(self, key):
-        kind, rest = key.split(':', 1)
-        sources = []
-        def read(url, fields=None):
+                self.jobs[key].update(running=False,error=error)
+    def load(self,key):
+        kind,rest=key.split(':',1)
+        sources=[]
+        def fetch(url):
             validate_url(url)
-            html, final = self.client.get(url) if fields is None else self.client.post(url, fields)
-            sources.append(dict(url=final, method='GET' if fields is None else 'POST',
-                                sha256=hashlib.sha256(html.encode()).hexdigest(), retrievedAt=now_iso()))
-            return html, final
-        adapter = BannerAdapter(read)
-        if kind == 'catalogterms':
-            result = adapter.terms()
-        elif kind == 'catalog':
-            term = rest
-            result = adapter.catalog(term)
-            for cid, item in result.get('details', {}).items():
-                record = dict(item, observedAt=now_iso(), origin='live', provenance=list(sources))
-                self.store.put(f'course:{term}:{cid}', record)
-        elif kind == 'terms':
+            html,final=self.client.get(url)
+            sources.append(dict(url=final,sha256=hashlib.sha256(html.encode()).hexdigest(),retrievedAt=now_iso()))
+            return html,final
+        if kind=='terms':
             if rest not in PROGRAM_MAP:
                 raise CatalogError('Unknown program.')
-            html, url = read(degree_url(rest))
-            result = dict(program=rest, terms=parse_terms(html, rest), source=url, sourceRole='admission-terms')
-        elif kind == 'degree':
-            program, term = rest.split(':')
-            if program not in PROGRAM_MAP:
-                raise CatalogError('Unknown program.')
-            # Do not make the degree load depend on a separate term-selector
-            # request succeeding. The response must identify BOTH p and term.
-            url = ('https://www.sabanciuniv.edu/en/prospective-students/degree-detail?'
-                   'SU_DEGREE.p_degree_detail?' + urlencode([
-                       ('P_TERM', term), ('P_PROGRAM', program), ('P_SUBMIT', ''), ('P_LANG', 'EN'), ('P_LEVEL', 'UG')]))
-            try:
-                html, final = read(url)
-                result = parse_degree(html, program, term, final)
-            except CatalogError as exc:
-                if any(x in str(exc) for x in ('HTTP 401', 'HTTP 403', 'HTTP 429', 'HTTP 503', 'verification page', 'cooldown')):
-                    raise
-                # Both are published official degree representations. No change
-                # of term/program and no rewriting a redirect to a login page.
-                html, final = read(degree_url(program, term))
-                result = parse_degree(html, program, term, final)
-            errors = []
+            html,url=fetch(degree_url(rest))
+            result=dict(program=rest,terms=parse_terms(html,rest),source=url)
+        elif kind=='degree':
+            program,term=rest.split(':')
+            # Validate actual availability rather than inventing program/admission combinations.
+            terms,saved=self.store.get('terms:'+program)
+            if terms is None or time.time()-saved>TTL:
+                terms=self.load('terms:'+program)
+                self.store.put('terms:'+program,terms)
+            if term not in {t['id'] for t in terms['terms']}:
+                raise CatalogError('That admission term is not listed by the official catalog for this program.')
+            html,url=fetch(degree_url(program,term))
+            result=parse_degree(html,program,term,url)
             def load_section(section):
-                parts = section.get('subsections')
-                if parts:
-                    for part in parts:
+                if section.get('subsections'):
+                    for part in section['subsections']:
                         load_section(part)
-                    section['courses'] = list({c['code']: c for part in parts for c in part['courses']}.values())
-                    section['complete'] = all(p.get('complete', True) for p in parts)
-                elif section['id'] in result['poolLinks']:
-                    try:
-                        pool_html, pool_url = read(result['poolLinks'][section['id']])
-                        listed = parse_pool(pool_html, program, pool_url)
-                        section['courses'] = list({c['code']:c for c in section['courses']+listed}.values())
-                        section.update(source=pool_url, complete=True, dataStatus='checked-pool')
-                    except CatalogError as exc:
-                        section.update(complete=False, dataStatus='pool-unavailable', poolSource=result['poolLinks'][section['id']])
-                        errors.append(section['label'] + ': ' + str(exc))
-                else:
-                    section['complete'] = True
-                section['totalCourseOptions'] = len(section['courses']) if section.get('complete', True) else None
+                    section['courses']=list({c['code']:c for part in section['subsections'] for c in part['courses']}.values())
+                if section['id'] in result['poolLinks']:
+                    pool_html,pool_url=fetch(result['poolLinks'][section['id']])
+                    listed=parse_pool(pool_html,program,pool_url)
+                    section['courses']=list({c['code']:c for c in section['courses']+listed}.values())
+                    section['source']=pool_url
             for section in result['sections']:
                 load_section(section)
-            previous, _ = self.store.get(key)
-            previous = previous or self.fallback(key)
-            if previous and previous.get('complete', True):
-                if errors:
-                    raise CatalogError('An elective pool could not be checked. The previous complete degree snapshot was kept.')
-                old_counts = {s['id']:len(s['courses']) for s in previous['sections']}
-                for s in result['sections']:
-                    old = old_counts.get(s['id'], 0)
-                    if old >= 15 and len(s['courses']) < old * .75:
-                        raise CatalogError('Unexpected major change in a course pool. Retaining the previous snapshot for review.')
-            result.pop('poolLinks', None)
-            result.update(sourceRole='degree-requirements', admissionTerm=term,
-                          complete=not errors, poolErrors=errors)
-        elif kind == 'course':
-            if ':' not in rest:
-                raise CatalogError('Choose a catalog term. Unversioned detail is available only as a labeled saved example.')
-            term, cid = rest.split(':', 1)
-            cid = code(cid)
-            # The full catalog is an optional accelerator, never a gate.
-            # A failed all-subject search used to prevent EVERY individual
-            # prerequisite read, including a course whose page was readable.
-            catalog, stamp = self.store.get('catalog:'+term)
-            current = bool(catalog and catalog.get('catalogTerm') == term and time.time()-stamp <= TTL)
-            if current and cid in catalog.get('details', {}):
-                result = dict(catalog['details'][cid])
-                if result.get('code') != cid or result.get('catalogTerm') != term:
-                    raise CatalogError('Cached catalog detail has a different course or term.')
-                result.update(observedAt=catalog.get('observedAt'), origin=catalog.get('origin', 'live'),
-                              provenance=copy.deepcopy(catalog.get('provenance', [])))
-                return result
-            item = catalog.get('courses', {}).get(cid) if current else None
-            result = adapter.course(cid, term, item)
-        elif kind == 'schedule':
-            term, cid = rest.split(':', 1)
-            catalog, _ = self.store.get('catalog:'+term)
-            links = catalog.get('courses', {}).get(cid, {}).get('scheduleLinks', []) if catalog else []
-            result = adapter.schedule(cid, term, links)
+            previous,_=self.store.get(key)
+            previous=previous or self.fallback(key)
+            if previous:
+                old_counts={s['id']:len(s['courses']) for s in previous['sections']}
+                for section in result['sections']:
+                    old=old_counts.get(section['id'],0)
+                    if old>=15 and len(section['courses'])<old*0.75:
+                        raise CatalogError('A course pool unexpectedly shrank by over 25%. Retaining the old snapshot until the adapter/source is reviewed.')
+            result.pop('poolLinks',None)
+        elif kind=='course':
+            cid=code(rest)
+            html,url=fetch(course_url(cid))
+            result=parse_course(html,cid,url)
         else:
             raise CatalogError('Unknown resource.')
-        result.update(observedAt=now_iso(), origin='live', provenance=sources)
+        result.update(observedAt=now_iso(),origin='live',provenance=sources)
         return result
-
     def _index_codes(self, degree):
-        priority = {'required':0, 'university':1, 'core':2, 'area':3, 'free':4}
-        ordered = sorted(degree['sections'], key=lambda s:priority.get(s['id'], 1))
-        return list(dict.fromkeys(c['code'] for s in ordered for c in s['courses']))[:3000]
+        priority={'university':0,'required':1,'core':2,'area':3,'free':4}
+        ordered=sorted(degree['sections'],key=lambda section:priority.get(section['id'],1))
+        return list(dict.fromkeys(c['code'] for section in ordered for c in section['courses']))[:1500]
 
-    def _cached_details(self, codes, catalog_term=None):
-        prefix = f'course:{catalog_term}:' if catalog_term else 'course:'
-        data, saved = {}, {}
+    def _cached_details(self, codes):
+        if not codes:
+            return {},{}
+        keys=['course:'+c for c in codes]
         with self.store.connect() as db:
-            for off in range(0, len(codes), 800):
-                keys = [prefix+c for c in codes[off:off+800]]
-                if not keys:
-                    continue
-                rows = db.execute('SELECT key,payload,saved FROM snapshots WHERE key IN ('+','.join('?' for _ in keys)+')', keys).fetchall()
-                for k, body, stamp in rows:
-                    cid = k[len(prefix):]
-                    item = json.loads(body)
-                    if item.get('code') == cid and (catalog_term is None or item.get('catalogTerm') == catalog_term):
-                        data[cid], saved[cid] = item, stamp
-        seed_details = self.seed.get('catalogDetails', {}).get(catalog_term, {}) if catalog_term else self.seed.get('details', {})
+            rows=db.execute('SELECT key,payload,saved FROM snapshots WHERE key IN ('+','.join('?' for _ in keys)+')', keys).fetchall()
+        data={k.removeprefix('course:'):json.loads(body) for k,body,_ in rows}
+        saved={k.removeprefix('course:'):stamp for k,_,stamp in rows}
         for cid in codes:
-            if cid not in data and cid in seed_details:
-                data[cid] = seed_details[cid]
-        return data, saved
+            if cid not in data and cid in self.seed['details']:
+                data[cid]=self.seed['details'][cid]
+        return data,saved
 
-    def graph_index(self, program, term, catalog_term=None):
-        key = f'degree:{program}:{term}'
-        degree, _ = self.store.get(key)
-        degree = degree or self.fallback(key)
+    def graph_index(self, program, term):
+        """Read cached prerequisite facts and start ONE bounded shared index job.
+        Nothing fetched on this endpoint is a user-supplied URL. Progress is
+        available while the first index is being built; failures retain dates.
+        """
+        key=f'degree:{program}:{term}'
+        degree,_=self.store.get(key)
+        degree=degree or self.fallback(key)
         if not degree:
-            return dict(data=None, meta=dict(refreshing=False, error='Degree requirements have not loaded yet.'))
-        codes = self._index_codes(degree)
-        details, saved = self._cached_details(codes, catalog_term)
-        offline = getattr(self.client, 'offline', False)
-        if catalog_term is None:
-            return dict(data=dict(program=program, term=term, catalogTerm=None, details=details),
-                        meta=dict(refreshing=False, offline=offline, total=len(codes), loaded=len(details),
-                                  legacy=True, error=None, scope='Unversioned saved examples, not rules for a selected catalog term.'))
-        catalog, catalog_saved = self.store.get('catalog:'+catalog_term)
-        # Exact-course responses validate the term and identity themselves.
-        # Aggregate catalog availability does not decide whether to read them.
-        pending = [cid for cid in codes if time.time()-saved.get(cid, 0) > TTL]
-        missing_catalog = ([cid for cid in codes if cid not in catalog.get('courses', {})]
-                           if catalog and time.time()-catalog_saved < TTL else [])
-        job_key = key + ':' + catalog_term
+            return dict(data=None,meta=dict(refreshing=False,error='Load a matching degree snapshot before indexing prerequisites.'))
+        codes=self._index_codes(degree)
+        details,saved=self._cached_details(codes)
+        pending=[cid for cid in codes if time.time()-saved.get(cid,0)>TTL]
+        offline=getattr(self.client,'offline',False)
         with self.lock:
-            job = self.index_jobs.get(job_key, {})
-            cooldown = 300 if job.get('error') else 60
-            if pending and not offline and not self.closed and not job.get('running') and time.time()-job.get('started', 0) >= cooldown:
-                if not any(j.get('running') for j in self.index_jobs.values()):
-                    if len(self.index_jobs) >= 128:
-                        self.index_jobs = {k:v for k,v in self.index_jobs.items() if v.get('running') or time.time()-v.get('started',0)<300}
-                    job = dict(running=True, started=time.time(), at=now_iso(), error=None, attempted=0, currentCourse=None, stage='details')
-                    self.index_jobs[job_key] = job
-                    self.index_executor.submit(self._build_index, job_key, pending, catalog_term)
+            job=self.index_jobs.get(key,{})
+            cooldown=300 if job.get('error') else 60
+            if pending and not offline and not self.closed and not job.get('running') and time.time()-job.get('started',0)>=cooldown:
+                if not any(v.get('running') for v in self.index_jobs.values()):
+                    if len(self.index_jobs)>96:
+                        self.index_jobs={k:v for k,v in self.index_jobs.items() if v.get('running') or time.time()-v.get('started',0)<300}
+                    job=dict(running=True,started=time.time(),at=now_iso(),error=None,attempted=0)
+                    self.index_jobs[key]=job
+                    self.index_executor.submit(self._build_index,key,pending)
                 else:
-                    job = dict(running=True, stage='queued', error=None)
-            meta = dict(refreshing=bool(job.get('running')), error=job.get('error'), lastAttempt=job.get('at'),
-                        offline=offline, attempted=job.get('attempted', 0), total=len(codes), loaded=len(details),
-                        catalogTerm=catalog_term, catalogTotal=len(catalog['courses']) if catalog else None,
-                        stage=job.get('stage', 'offline' if offline else 'idle'), currentCourse=job.get('currentCourse'),
-                        failed=job.get('failed', 0), lastError=job.get('lastError'),
-                        reviewRequired=sum(d.get('prerequisite', {}).get('type') == 'unknown' for d in details.values()),
-                        missingFromCatalog=missing_catalog, degreeComplete=degree.get('complete', True))
-        return dict(data=dict(program=program, term=term, catalogTerm=catalog_term, details=details), meta=meta)
+                    job=dict(running=False,error='Another major is being checked. Its shared course cache remains available; retry later.')
+            meta=dict(refreshing=bool(job.get('running')),error=job.get('error'),lastAttempt=job.get('at'),offline=offline,
+                      attempted=job.get('attempted',0),total=len(codes),loaded=len(details))
+        return dict(data=dict(program=program,term=term,details=details),meta=meta)
 
-    def _build_index(self, key, codes, catalog_term):
-        failures = 0; error = None; deadline = time.monotonic() + 1200
+    def _build_index(self,key,codes):
+        failures=0;error=None;deadline=time.monotonic()+1200
         for cid in codes:
-            if self.closed or time.monotonic() >= deadline:
+            if self.closed or time.monotonic()>deadline:
                 break
-            cache_key = f'course:{catalog_term}:{cid}'
-            previous, saved = self.store.get(cache_key)
-            if previous and time.time()-saved < TTL:
+            previous,saved=self.store.get('course:'+cid)
+            if previous and time.time()-saved<TTL:
                 continue
-            with self.lock:
-                self.index_jobs[key].update(currentCourse=cid, stage='details')
             try:
-                self.store.put(cache_key, self.load(cache_key))
-                failures = 0
+                value=self.load('course:'+cid)
+                self.store.put('course:'+cid,value)
+                failures=0
             except Exception as exc:
-                failures += 1
-                error = str(exc) if isinstance(exc, CatalogError) else 'Official catalog unavailable. Existing details were kept.'
-                with self.lock:
-                    j = self.index_jobs[key]
-                    j.update(failed=j.get('failed', 0)+1, lastError=error)
-                LOG.warning('Prerequisite detail check failed (%s): %s', cache_key, error)
+                failures+=1
+                error=str(exc) if isinstance(exc,CatalogError) else 'Official catalog unavailable. Checked prerequisite links have been kept.'
+                LOG.warning('Prerequisite index read failed (%s): %s',cid,type(exc).__name__)
             with self.lock:
-                self.index_jobs[key]['attempted'] += 1
-            if failures >= 3:
+                self.index_jobs[key]['attempted']+=1
+            # Stop early on unavailable/changed sources, rather than hammering
+            # hundreds of URLs after an outage, robots block or parser change.
+            if failures>=3:
                 break
         with self.lock:
-            self.index_jobs[key].update(running=False, error=error, currentCourse=None, stage='paused' if error else 'idle')
+            self.index_jobs[key].update(running=False,error=error)
 
     def close(self):
         with self.lock:
-            self.closed = True
-        self.index_executor.shutdown(wait=True, cancel_futures=True)
-        self.executor.shutdown(wait=True, cancel_futures=True)
+            self.closed=True
+        self.index_executor.shutdown(wait=True,cancel_futures=True)
+        self.executor.shutdown(wait=True,cancel_futures=True)

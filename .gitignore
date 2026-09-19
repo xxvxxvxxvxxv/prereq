@@ -1,0 +1,17 @@
+.cache/
+__pycache__/
+*.py[cod]
+*.sqlite3*
+.venv/
+venv/
+node_modules/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+*.log
+test-results/
+playwright-report/
+dist/
+*.zip

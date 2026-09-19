@@ -1,20 +1,96 @@
-![PREREQ — Course pathways](docs/prereq-banner.png)
+# PREREQ
 
-# PREREQ — course pathways
+A Sabancı prerequisite map. Start with University courses and Major required courses, then expand a course to see the courses that list it as a prerequisite.
 
-Choose a major, expand its courses, and see their prerequisite relationships. Static Cloudflare app; no visitor-triggered scraping, degree totals or admission-year requirement pages.
+![University courses and their outgoing prerequisite branches](docs/overview.png)
 
-For this complete project, read [UPLOAD.md](UPLOAD.md) or START-HERE.txt. No previous folder is required. The included reference data is incomplete; run the collector to populate current course rules.
+## Open it
+
+Open **`preview.html`** for the self-contained offline version. No installation is needed.
+
+For the local app with source checking, use Python 3.11 or newer:
 
 ```sh
-python scripts/update_snapshots.py
-npm run deploy
+python3 start.py
 ```
 
-The collector reads the pinned course catalog and course details. Progress is printed and data/update-report.json lists unresolved rules by major. Public source responses for failed parses are saved in data/source-failures. Unknown prerequisites remain unknown.
+Windows:
 
-All 12 programs use subject mappings in data/update-config.json. The graph includes subject courses with undergraduate numbers and linked ENS foundations; other prerequisites remain accessible in course details. This is not a graduation requirement checker.
+```powershell
+py -3 start.py
+```
 
-UPLOAD.md includes Cloudflare publishing and optional daily GitHub updates. Historical reports describe previous releases.
+The app opens at `http://127.0.0.1:8765`. Leave the terminal running and stop with Ctrl+C. There is no npm build, API key, university login, database setup or Python package installation for local use. `START.command` and `START.bat` are optional launch helpers.
 
-MIT license. Independent student tool.
+To use only bundled/cached facts and make no university requests:
+
+```sh
+python3 start.py --offline
+```
+
+## The map
+
+The primary map now shows **prerequisite → dependent course** relationships. There are no subject folders or artificial course-number ranges. University courses appear first, Major required courses follow, and Core / Area / Free elective pools are lower down. Actual HUM and mathematics alternatives remain choices, not lists of courses you must all take.
+
+Click a course row or `+` to reveal its outgoing branches. Click the small `i` for credits, minimum grades, full prerequisite logic, corequisites and the official source. Search opens a focused forward map. The course panel also offers a separate upstream prerequisite-chain view.
+
+`ALL`, `OR` and `ALL/OR` distinguish combined requirements from alternatives. A single arrow is one prerequisite relationship, **not proof of registration eligibility**. A course can appear in several branches; every occurrence shares the same Planned/Completed marker. Courses displayed by default are not automatically marked completed.
+
+The background is black and text is white. Only the subject dots are colored: EE blue, BIO green, CS red, ME purple, with additional subject colors for IE, MAT and DSA.
+
+### Motion and navigation
+
+Branches expand and collapse with a 320 ms transition. The viewport translation and zoom do not change during either action, including after manual panning or zooming. Only explicit navigation, Fit, Reset, search focus and changing the selected degree can reposition the camera. Resizing preserves the world coordinate at the viewport center. Reduced-motion preferences disable animations.
+
+Drag or touch-drag to move the map. Scroll or pinch to zoom. `/` searches; `F` fits; `+` / `-` zoom; Tab then Enter/Space expands; `I` opens details; arrow keys pan the focused map. University / Major required / Electives shortcuts move to those sections on request. List view remains available.
+
+Plans stay in browser storage, separated by major and first admission term. JSON import/export is supported. These marks do not verify grades, GPA, waivers, equivalences or degree-credit allocation.
+
+## Data coverage
+
+The bundled degree is **Electronics Engineering / Fall 2024 admission**, observed on 17 September 2026. It contains 624 course options: 24 University, 15 Required, 39 Core, 140 Area and 406 Free. These are pool option counts, not a mandatory-course total.
+
+Version 2 includes **57 course-detail records**. Of these, 56 prerequisite expressions are parseable, including explicitly listed no-prerequisite cases. ENS 491 stays context-dependent because its description contains program, admission-year and completed-credit conditions. The other 567 courses have no bundled detail. The visible coverage counter reports this, and missing data never creates guessed edges.
+
+The local backend discovers the selected degree's actual course-pool links and indexes course pages into a shared cache, prioritizing University and Required courses. The first full index takes time. Partial results are displayed as they arrive without recentering the map. Source traffic is serialized, rate-limited and bounded. Failed checks retain the previous record and its original observation date.
+
+The cache is rechecked on use after 12 hours. The refresh control starts a degree check and the index follows the cache policy. The offline HTML never refreshes itself. Prerequisites use the **current course catalog**; first admission term selects **degree requirements**, not historical prerequisites.
+
+**Verification boundary:** Python/model/browser tests and loopback HTTP responses were checked. Direct university connections failed in the build environment, so actual live indexing across the 12 configured majors remains unverified. The bundled facts were read from official public pages through the research browser, not generated by a successful scraper run. Parser fixtures are reconstructed HTML. Run this on a network that can access the official source before relying on live operation:
+
+```sh
+python3 scripts/check_live.py --program BSEE --term 202401
+```
+
+## Development and tests
+
+```sh
+python3 -m unittest discover -s tests -v
+node --test tests/model.test.cjs
+python3 scripts/build_seed.py
+python3 scripts/build_preview.py
+```
+
+Node 20+ is only needed for model tests, not the website. Optional browser checks:
+
+```sh
+python3 -m pip install -r requirements-dev.txt
+python3 -m playwright install chromium
+python3 scripts/browser_smoke.py --screenshots docs
+```
+
+Use `--chromium /path/to/chromium` with a system browser. The browser harness renders the real HTML and samples animation frames, but simulates browser storage and one live-index response. It is not a live-university test. See [testing](docs/TESTING.md).
+
+## GitHub and hosting
+
+This ZIP is source code, not an already-published repository. The included helper uses your GitHub CLI login, creates a public repository and does not overwrite an existing one:
+
+```sh
+bash scripts/publish.sh
+```
+
+GitHub Pages can host `docs/index.html` as an **offline snapshot only**. The live app needs the Python backend. See [publication and deployment](docs/PUBLISHING.md).
+
+Vanilla JavaScript, CSS and SVG; Python standard-library WSGI; SQLite. No analytics, external frontend libraries, account system or university credentials. [Architecture](docs/ARCHITECTURE.md), [sources](docs/SOURCES.md), [security](SECURITY.md).
+
+Independent student tool. Not affiliated with Sabancı University. Official Degree Evaluation remains authoritative. Software is MIT-licensed; catalog facts are attributed in [NOTICE](NOTICE).

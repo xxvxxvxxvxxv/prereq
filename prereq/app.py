@@ -5,10 +5,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 import json
 import os
-import re
 import threading
 import time
-from . import __version__
 from .catalog import PROGRAM_MAP, CatalogError, TERM_RE, code
 from .service import CatalogService
 
@@ -44,18 +42,6 @@ class App:
         self.service=service or CatalogService(self.root,Path(cache or os.environ.get('PREREQ_CACHE',self.root/'.cache'/'catalog.sqlite3')),
             offline=os.environ.get('PREREQ_OFFLINE')=='1' if offline is None else offline)
         self.hosts={'localhost','127.0.0.1','[::1]'} | {x.strip().lower() for x in os.environ.get('PREREQ_HOSTS','').split(',') if x.strip()}
-        # Render supplies this exact hostname as an environment variable. Do not
-        # accept wildcard hosts or trust a user-controlled X-Forwarded-Host.
-        render_host=os.environ.get('RENDER_EXTERNAL_HOSTNAME','').strip().lower()
-        if render_host:
-            if not re.fullmatch(r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.onrender\.com',render_host):
-                raise ValueError('RENDER_EXTERNAL_HOSTNAME must be one exact onrender.com hostname.')
-            self.hosts.add(render_host)
-        # An explicit public scheme handles TLS termination without trusting
-        # arbitrary incoming forwarded-protocol headers. Render serves HTTPS.
-        self.public_scheme=os.environ.get('PREREQ_PUBLIC_SCHEME','').strip().lower()
-        if self.public_scheme not in {'','http','https'}:
-            raise ValueError('PREREQ_PUBLIC_SCHEME must be http or https when set.')
         self.rate=RateLimit()
     def __call__(self,environ,start_response):
         method=environ.get('REQUEST_METHOD','GET')
@@ -73,7 +59,7 @@ class App:
             if method not in {'GET','HEAD','POST'}:
                 return respond('405 Method Not Allowed',dict(error='Method not allowed.'),extra=[('Allow','GET, HEAD, POST')])
             if path=='/health' and method in {'GET','HEAD'}:
-                return respond('200 OK',dict(status='ok',version=__version__))
+                return respond('200 OK',dict(status='ok',version='2.0.0'))
             if path.startswith('/api/'):
                 if environ.get('HTTP_SEC_FETCH_SITE')=='cross-site' or environ.get('HTTP_X_PREREQ_CLIENT')!='1':
                     return respond('403 Forbidden',dict(error='Same-origin application requests only.'))
@@ -91,7 +77,7 @@ class App:
                     if method!='POST':
                         return respond('405 Method Not Allowed',dict(error='Refresh requires POST.'))
                     origin=environ.get('HTTP_ORIGIN')
-                    expected=(self.public_scheme or environ.get('wsgi.url_scheme','http'))+'://'+rawhost
+                    expected=environ.get('wsgi.url_scheme','http')+'://'+rawhost
                     if origin and origin!=expected:
                         return respond('403 Forbidden',dict(error='Origin does not match this site.'))
                     if environ.get('CONTENT_LENGTH','0') not in {'','0'}:
@@ -99,7 +85,7 @@ class App:
                 elif method!='GET':
                     return respond('405 Method Not Allowed',dict(error='Read endpoints require GET.'))
                 if path in {'/api/degree','/api/terms','/api/refresh','/api/index'}:
-                    if set(q)-{'program','term','catalogTerm'}:
+                    if set(q)-{'program','term'}:
                         raise CatalogError('Unsupported query parameter.')
                     program=q.get('program',[''])[0]
                     if program not in PROGRAM_MAP:
@@ -111,33 +97,12 @@ class App:
                         if not TERM_RE.fullmatch(term):
                             raise CatalogError('Select a valid first admission term.')
                         if path=='/api/index':
-                            catalog_term=q.get('catalogTerm',[None])[0]
-                            if catalog_term is not None and not TERM_RE.fullmatch(catalog_term):
-                                raise CatalogError('Invalid catalog term.')
-                            return respond('200 OK',self.service.graph_index(program,term,catalog_term))
+                            return respond('200 OK',self.service.graph_index(program,term))
                         key=f'degree:{program}:{term}'
-                        if refresh and q.get('catalogTerm'):
-                            ct=q['catalogTerm'][0]
-                            if not TERM_RE.fullmatch(ct): raise CatalogError('Invalid catalog term.')
-                            # The displayed major's term-scoped index does the refresh.
-                            # Do not launch an all-subject job ahead of visible courses.
                 elif path=='/api/course':
-                    if not {'code'} <= set(q) or set(q)-{'code','catalogTerm'}:
+                    if set(q)!={'code'}:
                         raise CatalogError('A course code is required.')
-                    cid=code(q['code'][0]); ct=q.get('catalogTerm',[None])[0]
-                    if ct is not None and not TERM_RE.fullmatch(ct): raise CatalogError('Invalid catalog term.')
-                    key=f'course:{ct}:{cid}' if ct else 'course:'+cid
-                elif path=='/api/catalog-terms':
-                    if q: raise CatalogError('No parameters accepted.')
-                    key='catalogterms:list'
-                elif path=='/api/catalog':
-                    if set(q)!={'catalogTerm'} or not TERM_RE.fullmatch(q['catalogTerm'][0]):
-                        raise CatalogError('Select a valid catalog term.')
-                    key='catalog:'+q['catalogTerm'][0]
-                elif path=='/api/schedule':
-                    if set(q)!={'term','code'} or not TERM_RE.fullmatch(q['term'][0]):
-                        raise CatalogError('Select a valid schedule term and course.')
-                    key=f"schedule:{q['term'][0]}:{code(q['code'][0])}"
+                    key='course:'+code(q['code'][0])
                 else:
                     return respond('404 Not Found',dict(error='Unknown API endpoint.'))
                 return respond('200 OK',self.service.get(key,refresh=refresh))

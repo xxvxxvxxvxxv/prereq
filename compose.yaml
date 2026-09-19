@@ -6,7 +6,6 @@ services:
       - "127.0.0.1:8765:8000"
     environment:
       PREREQ_HOSTS: "${PREREQ_HOSTS:-localhost,127.0.0.1}"
-      PREREQ_PUBLIC_SCHEME: "${PREREQ_PUBLIC_SCHEME:-}"
       PREREQ_OFFLINE: "${PREREQ_OFFLINE:-0}"
     volumes:
       - catalog-cache:/data
