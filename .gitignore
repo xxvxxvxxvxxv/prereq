@@ -17,3 +17,8 @@ dist/
 *.zip
 
 .wrangler/
+collector/output/
+wrangler.jsonc
+collector/cs-degree-page.html
+collector/cs-2024.json
+collector/*.html
