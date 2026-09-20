@@ -7,7 +7,7 @@
   const uniqueCourses = degree => Object.fromEntries(degree.sections.flatMap(s => s.courses.map(c => [c.code, c])));
   const node = (id, label, kind, children = [], extra = {}) => ({ id, label, kind, children, ...extra });
   const subject = code => String(code).split(' ')[0];
-  const subjectClass = code => ({ EE:'ee',EL:'ee',BIO:'bio',CS:'cs',ME:'me',IE:'ie',MAT:'mat',DSA:'dsa' })[subject(code)] || 'other';
+  const subjectClass = code => ({ EE:'ee',EL:'ee',BIO:'bio',CS:'cs',ME:'me',IE:'ie',MAT:'mat',DSA:'dsa',ECON:'econ',PSIR:'psir',PSY:'psy',VA:'vacd',VACD:'vacd',MGMT:'mgmt',MAN:'mgmt' })[subject(code)] || 'other';
   function leaves(ast) {
     if (!ast || ast.type === 'unknown' || ast.type === 'none') return [];
     if (ast.type === 'course') return [{ code: ast.code, minGrade: ast.minGrade || null }];
@@ -26,8 +26,15 @@
   function ruleBadge(detail) {
     if (!detail || !known(detail.prerequisite)) return '?';
     const ast = detail.prerequisite;
-    if (ast.type === 'and') return ast.children.some(c => c.type === 'or') ? 'ALL/OR' : 'ALL';
-    if (ast.type === 'or') return 'OR';
+    const nested = value => (value.children || []).some(child => child.type === 'and' || child.type === 'or');
+    if (ast.type === 'and') {
+      if (nested(ast)) return 'RULE';
+      return (ast.children || []).length > 1 ? `ALL ${(ast.children || []).length}` : '';
+    }
+    if (ast.type === 'or') {
+      if (nested(ast)) return 'RULE';
+      return (ast.children || []).length > 1 ? `ANY ${(ast.children || []).length}` : '';
+    }
     if (detail.generalRequirements) return '!';
     return '';
   }

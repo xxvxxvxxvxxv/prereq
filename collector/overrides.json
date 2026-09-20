@@ -1,0 +1,771 @@
+{
+  "schemaVersion": 1,
+  "global": {
+    "CIP 101N": {
+      "title": "Civic Involvement Projects I-N",
+      "prerequisite": {
+        "type": "none",
+        "raw": ""
+      },
+      "corequisite": {
+        "type": "none",
+        "raw": ""
+      },
+      "prerequisiteText": "",
+      "corequisiteText": "",
+      "generalRequirements": "Official University Course listings show CIP 101N without a course prerequisite; used as a fallback because the individual public course endpoint returned HTTP 500.",
+      "source": "https://www.sabanciuniv.edu/en/university-courses-fdy"
+    },
+    "ENS 203": {
+      "title": "Electronic Circuits I",
+      "prerequisite": {
+        "type": "course",
+        "code": "MATH 102",
+        "minGrade": null
+      },
+      "corequisite": {
+        "type": "course",
+        "code": "ENS 203R",
+        "minGrade": null
+      },
+      "prerequisiteText": "MATH 102",
+      "corequisiteText": "ENS 203R",
+      "generalRequirements": "",
+      "source": "https://apps.sabanciuniv.edu/courses/syllabus/view.php?crn=10337&origin=www_syllabus&term=202501"
+    },
+    "ENS 492": {
+      "title": "Graduation Project (Implementation)",
+      "prerequisite": {
+        "type": "course",
+        "code": "ENS 491",
+        "minGrade": null
+      },
+      "corequisite": {
+        "type": "none",
+        "raw": ""
+      },
+      "prerequisiteText": "ENS 491",
+      "corequisiteText": "",
+      "generalRequirements": "",
+      "source": "https://apps.sabanciuniv.edu/courses/syllabus/view.php?cn=492&sc=ENS&section=01&term=202502&view=public"
+    }
+  },
+  "degrees": {
+    "BSBIO:202401": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "BIO 301",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "BIO 303",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "BIO 301 OR BIO 303",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSCS:202401": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "CS 300",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "CS 306",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "CS 308",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "CS 300 OR CS 306 OR CS 308",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSEE:202401": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "EE 202",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "ENS 211",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "EE 202 OR ENS 211",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSMS:202401": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "IE 305",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "IE 312",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "IE 305 OR IE 312",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSMAT:202401": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "MAT 312",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "MAT 314",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "MAT 312 OR MAT 314",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSME:202401": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "ME 301",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "ME 303",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "ME 301 OR ME 303",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSBIO:202301": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "BIO 301",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "BIO 303",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "BIO 301 OR BIO 303",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSCS:202301": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "CS 300",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "CS 306",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "CS 308",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "CS 300 OR CS 306 OR CS 308",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSMS:202301": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "IE 305",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "IE 312",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "IE 305 OR IE 312",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSMAT:202301": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "MAT 312",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "MAT 314",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "MAT 312 OR MAT 314",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSME:202301": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "ME 301",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "ME 303",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "ME 301 OR ME 303",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSEE:202301": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "EE 202",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "ENS 211",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "EE 202 OR ENS 211",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSBIO:202501": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "BIO 301",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "BIO 303",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "BIO 301 OR BIO 303",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSCS:202501": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "CS 300",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "CS 306",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "CS 308",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "CS 300 OR CS 306 OR CS 308",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSMS:202501": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "IE 305",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "IE 312",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "IE 305 OR IE 312",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSMAT:202501": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "MAT 312",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "MAT 314",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "MAT 312 OR MAT 314",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSME:202501": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "ME 301",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "ME 303",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "ME 301 OR ME 303",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSEE:202501": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "EE 202",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "ENS 211",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "EE 202 OR ENS 211",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSBIO:202601": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "BIO 301",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "BIO 303",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "BIO 301 OR BIO 303",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSCS:202601": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "CS 300",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "CS 306",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "CS 308",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "CS 300 OR CS 306 OR CS 308",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSMS:202601": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "IE 305",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "IE 312",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "IE 305 OR IE 312",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSMAT:202601": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "MAT 312",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "MAT 314",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "MAT 312 OR MAT 314",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSME:202601": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "or",
+          "children": [
+            {
+              "type": "course",
+              "code": "ME 301",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "ME 303",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "ME 301 OR ME 303",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    },
+    "BSEE:202601": {
+      "ENS 491": {
+        "title": "Graduation Project (Design)",
+        "prerequisite": {
+          "type": "and",
+          "children": [
+            {
+              "type": "course",
+              "code": "EE 202",
+              "minGrade": null
+            },
+            {
+              "type": "course",
+              "code": "ENS 211",
+              "minGrade": null
+            }
+          ]
+        },
+        "corequisite": {
+          "type": "course",
+          "code": "ENS 491R",
+          "minGrade": null
+        },
+        "prerequisiteText": "EE 202 AND ENS 211",
+        "corequisiteText": "ENS 491R",
+        "generalRequirements": "",
+        "source": "https://www.sabanciuniv.edu/en/aday-ogrenciler/lisans/ders-katalogu/course/ENS-491"
+      }
+    }
+  }
+}
