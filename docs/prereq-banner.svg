@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="500" viewBox="0 0 1600 500" role="img" aria-labelledby="title desc">
+<title id="title">PREREQ — Sabancı prerequisite map</title>
+<desc id="desc">Minimal black project banner with a prerequisite graph motif.</desc>
+<rect width="1600" height="500" fill="#050505"/>
+<g fill="none" stroke="#2b2b2b" stroke-width="2">
+  <path d="M900 250 C1010 250 1020 120 1140 120"/>
+  <path d="M900 250 C1010 250 1020 200 1140 200"/>
+  <path d="M900 250 C1010 250 1020 300 1140 300"/>
+  <path d="M900 250 C1010 250 1020 380 1140 380"/>
+  <path d="M1160 120 C1280 120 1270 165 1380 165"/>
+  <path d="M1160 200 C1280 200 1270 165 1380 165"/>
+  <path d="M1160 300 C1280 300 1270 340 1380 340"/>
+  <path d="M1160 380 C1280 380 1270 340 1380 340"/>
+</g>
+<g>
+  <circle cx="900" cy="250" r="7" fill="#ffffff"/>
+  <circle cx="1140" cy="120" r="6" fill="#ff6b7a"/>
+  <circle cx="1140" cy="200" r="6" fill="#66a3ff"/>
+  <circle cx="1140" cy="300" r="6" fill="#7ce3a1"/>
+  <circle cx="1140" cy="380" r="6" fill="#c590ff"/>
+  <circle cx="1380" cy="165" r="6" fill="#ffffff"/>
+  <circle cx="1380" cy="340" r="6" fill="#ffffff"/>
+</g>
+<g fill="#ffffff" font-family="Inter,Segoe UI,Arial,sans-serif">
+  <text x="110" y="204" font-size="25" font-weight="700" letter-spacing="8">PREREQ</text>
+  <text x="110" y="274" font-size="61" font-weight="500" letter-spacing="-2">Your degree, connected.</text>
+  <text x="113" y="326" font-size="21" fill="#8f8f8f">Sabancı prerequisites · major + admission term</text>
+</g>
+<g fill="#9a9a9a" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14">
+  <text x="1160" y="115">COURSE</text>
+  <text x="1160" y="195">COURSE</text>
+  <text x="1160" y="295">COURSE</text>
+  <text x="1160" y="375">COURSE</text>
+  <text x="1400" y="160">NEXT</text>
+  <text x="1400" y="335">NEXT</text>
+</g>
+<rect x="0.5" y="0.5" width="1599" height="499" fill="none" stroke="#1d1d1d"/>
+</svg>

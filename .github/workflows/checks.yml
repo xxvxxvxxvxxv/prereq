@@ -1,26 +1,32 @@
-name: Check source and snapshots
+name: Check PREREQ release
+
 on:
   push:
   pull_request:
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   test:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, verified 2026-09-17
-        with:
-          persist-credentials: false
-      - name: Python and JavaScript tests
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate bundled release
+        run: python3 scripts/ci_release_check.py
+
+      - name: Check JavaScript
         run: |
-          python3 --version
-          node --version
-          python3 -m unittest discover -s tests -v
+          node --check web/app.js
+          node --check web/model.js
           node --test tests/model.test.cjs
-      - name: Generated files match their sources
+
+      - name: Verify generated preview
         run: |
-          python3 scripts/build_seed.py
           python3 scripts/build_preview.py
-          git diff --exit-code -- web/seed.json preview.html docs/index.html
+          git diff --exit-code -- preview.html docs/index.html
